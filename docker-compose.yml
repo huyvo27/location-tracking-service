@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: fastapi_user
+      POSTGRES_PASSWORD: fastapi123
+      POSTGRES_DB: app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  alembic:
+    image: python:3.10-slim
+    container_name: alembic
+    working_dir: /app
+    volumes:
+      - ./alembic:/app
+    environment:
+      DATABASE_URL: postgresql+psycopg2://fastapi_user:fastapi123@db:5432/app_db
+    depends_on:
+      - db
+    entrypoint: ["sh", "-c", "while ! nc -z db 5432; do sleep 1; done; alembic upgrade head"]
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://fastapi_user:fastapi123@db:5432/app_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  postgres_data:
