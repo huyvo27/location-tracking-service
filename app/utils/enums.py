@@ -2,5 +2,5 @@ import enum
 
 
 class UserRole(enum.Enum):
-    ADMIN = "admin"
-    GUEST = "guest"
+    SYS_ADMIN = "sys_admin"
+    USER = "user"

@@ -25,7 +25,7 @@ def create_admin_user(db: Session):
                 email=settings.DEFAULT_ADMIN_EMAIL,
                 hashed_password=hashed_password,
                 is_active=True,
-                role=UserRole.ADMIN.value,
+                role=UserRole.SYS_ADMIN.value,
             )
 
             logger.info(f"Admin user created: {admin_user.username}")
@@ -36,7 +36,7 @@ def create_admin_user(db: Session):
         raise
 
 
-def setup_admin_user():
+def setup_system_admin():
     db = SessionLocal()
     try:
         create_admin_user(db)

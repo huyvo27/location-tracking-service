@@ -22,7 +22,7 @@ class UserCreateRequest(UserBase):
     password: str = Field(..., min_length=8)
     email: EmailStr
     is_active: bool = True
-    role: UserRole = UserRole.GUEST
+    role: UserRole = UserRole.USER
 
 
 class UserUpdateMeRequest(BaseModel):

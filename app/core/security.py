@@ -35,9 +35,9 @@ def decode_access_token(token: str):
             token, settings.SECRET_KEY, algorithms=[settings.SECURITY_ALGORITHM]
         )
         return TokenData(**payload)
-    
+
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    
+
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")

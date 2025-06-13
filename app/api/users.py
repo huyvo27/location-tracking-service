@@ -85,7 +85,6 @@ def update_me(
     """
     API Update current User
     """
-    print(user_data)
     updated_user = user_service.update_me(data=user_data, current_user=current_user)
     return Response.success(data=updated_user)
 

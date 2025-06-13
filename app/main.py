@@ -8,7 +8,7 @@ from app.core.router import router
 from app.config import settings
 from app.core.exception_handlers import register_exception_handlers
 from app.db import Base, engine
-from app.initialization import setup_admin_user
+from app.initialization import setup_system_admin
 
 
 Base.metadata.create_all(bind=engine)
@@ -40,7 +40,7 @@ app = get_app()
 
 @app.on_event("startup")
 async def startup():
-    setup_admin_user()
+    setup_system_admin()
 
 
 if __name__ == "__main__":
