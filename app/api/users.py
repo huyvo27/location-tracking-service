@@ -9,6 +9,7 @@ from app.dependencies import (
     get_db,
 )
 from app.utils.pagination import PaginationParams, paginate
+from app.utils.enums import UserRole
 from app.schemas.response import Response, PaginatedResponse
 from app.schemas.user import (
     UserItemResponse,
@@ -103,7 +104,7 @@ def detail(user_id: int, user_service: UserService = Depends(get_user_service)) 
 
 @router.put(
     "/{user_id}",
-    dependencies=[permission_required("admin")],
+    dependencies=[permission_required(UserRole.SYS_ADMIN.value)],
     response_model=Response[UserItemResponse],
 )
 def update(
@@ -120,7 +121,7 @@ def update(
 
 @router.delete(
     "/{user_id}",
-    dependencies=[permission_required("admin")],
+    dependencies=[permission_required(UserRole.SYS_ADMIN.value)],
     response_model=Response[UserItemResponse],
 )
 def delete(user_id: int, user_service: UserService = Depends(get_user_service)) -> Any:
