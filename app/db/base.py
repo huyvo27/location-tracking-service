@@ -1,14 +1,26 @@
+from functools import wraps
 from math import ceil
 import inflect
 from datetime import datetime, timezone
-from typing import Type, TypeVar, Optional
+from typing import Callable, Type, TypeVar, Optional
 
 from sqlalchemy import Column, Integer, DateTime
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.orm import Session
+from .database import SessionLocal
 
 p = inflect.engine()
 T = TypeVar("T", bound="BareBaseModel")
+
+
+def with_db_session(func: Callable) -> Callable:
+    @wraps(func)
+    def wrapper(cls, *args, db: Optional[Session] = None, **kwargs) -> T:
+        if db is None:
+            with SessionLocal() as db:
+                return func(cls, *args, db=db, **kwargs)
+        return func(cls, *args, db=db, **kwargs)
+    return wrapper
 
 
 @as_declarative()
@@ -33,7 +45,8 @@ class BareBaseModel(Base):
     )
 
     @classmethod
-    def create(cls: Type[T], db: Session, **kwargs) -> T:
+    @with_db_session
+    def create(cls: Type[T], db: Optional[Session] = None, **kwargs) -> T:
         instance = cls(**kwargs)
         db.add(instance)
         db.commit()
@@ -41,18 +54,22 @@ class BareBaseModel(Base):
         return instance
 
     @classmethod
-    def find(cls: Type[T], db: Session, _id: int) -> Optional[T]:
+    @with_db_session
+    def find(cls: Type[T], _id: int, db: Optional[Session] = None) -> Optional[T]:
         return db.query(cls).get(_id)
 
     @classmethod
-    def all(cls: Type[T], db: Session):
+    @with_db_session
+    def all(cls: Type[T], db: Optional[Session] = None):
         return db.query(cls)
 
     @classmethod
-    def filter_by(cls: Type[T], db: Session, **kwargs):
+    @with_db_session
+    def filter_by(cls: Type[T], db: Optional[Session] = None, **kwargs):
         return db.query(cls).filter_by(**kwargs)
 
-    def update(self, db: Session, **kwargs) -> T:
+    @with_db_session
+    def update(self, db: Optional[Session] = None, **kwargs) -> T:
         for key, value in kwargs.items():
             if value is not None:
                 if hasattr(self, key):
@@ -65,6 +82,7 @@ class BareBaseModel(Base):
         db.refresh(self)
         return self
 
-    def delete(self, db: Session):
+    @with_db_session
+    def delete(self, db: Optional[Session] = None):
         db.delete(self)
         db.commit()
