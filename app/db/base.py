@@ -53,8 +53,6 @@ class BareBaseModel(Base):
         return db.query(cls).filter_by(**kwargs)
 
     def update(self, db: Session, **kwargs) -> T:
-        print(kwargs.items())
-        print("asdsadasdsad")
         for key, value in kwargs.items():
             if value is not None:
                 if hasattr(self, key):
