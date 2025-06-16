@@ -42,7 +42,7 @@ class UserUpdateRequest(BaseModel):
 
 
 class UserItemResponse(UserBase):
-    id: int
+    uuid: str
     full_name: Optional[str]
     username: str
     email: EmailStr

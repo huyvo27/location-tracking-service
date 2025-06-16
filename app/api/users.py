@@ -91,43 +91,43 @@ def update_me(
 
 
 @router.get(
-    "/{user_id}",
+    "/{user_uuid}",
     dependencies=[Depends(login_required)],
     response_model=Response[UserItemResponse],
 )
-def detail(user_id: int, user_service: UserService = Depends(get_user_service)) -> Any:
+def detail(user_uuid: str, user_service: UserService = Depends(get_user_service)) -> Any:
     """
     API get Detail User
     """
-    return Response.success(data=user_service.get(user_id))
+    return Response.success(data=user_service.get(user_uuid))
 
 
 @router.put(
-    "/{user_id}",
+    "/{user_uuid}",
     dependencies=[permission_required(UserRole.SYS_ADMIN.value)],
     response_model=Response[UserItemResponse],
 )
 def update(
-    user_id: int,
+    user_uuid: str,
     user_data: UserUpdateRequest,
     user_service: UserService = Depends(get_user_service),
 ) -> Any:
     """
     API update User
     """
-    updated_user = user_service.update(user_id=user_id, data=user_data)
+    updated_user = user_service.update(user_uuid=user_uuid, data=user_data)
     return Response.success(data=updated_user)
 
 
 @router.delete(
-    "/{user_id}",
+    "/{user_uuid}",
     dependencies=[permission_required(UserRole.SYS_ADMIN.value)],
     response_model=Response[UserItemResponse],
 )
-def delete(user_id: int, user_service: UserService = Depends(get_user_service)) -> Any:
+def delete(user_uuid: str, user_service: UserService = Depends(get_user_service)) -> Any:
     """
     API delete User
     """
 
-    user_service.delete(user_id=user_id)
+    user_service.delete(user_uuid=user_uuid)
     return Response.success()

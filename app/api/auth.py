@@ -30,6 +30,6 @@ def login(form_data: LoginRequest, db: Session = Depends(get_db)):
         raise InactiveUser()
 
     user.update(db=db, last_login=datetime.now(timezone.utc))
-    toke_data = {"user_id": user.id}
+    toke_data = {"sub": user.uuid}
 
     return Response.success({"access_token": create_access_token(data=toke_data)})

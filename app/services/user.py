@@ -54,8 +54,8 @@ class UserService:
             hashed_password=hash_password(data.password) if data.password else None,
         )
 
-    def update(self, user_id: int, data: UserUpdateRequest):
-        user = self.get(user_id)
+    def update(self, user_uuid: int, data: UserUpdateRequest):
+        user = self.get(user_uuid)
 
         return user.update(
             db=self.db,
@@ -67,14 +67,14 @@ class UserService:
             role=user.role if data.role is None else data.role.value,
         )
 
-    def get(self, user_id):
-        exist_user = User.find(db=self.db, _id=user_id)
+    def get(self, user_uuid: str)-> User:
+        exist_user = User.find_by(db=self.db, uuid=user_uuid)
         if exist_user is None:
             raise UserNotFound()
         return exist_user
 
-    def delete(self, user_id):
-        user = self.get(user_id)
+    def delete(self, user_uuid: str):
+        user = self.get(user_uuid)
         if user:
             user.delete(db=self.db)
             return True

@@ -57,6 +57,11 @@ class BareBaseModel(Base):
     @with_db_session
     def find(cls: Type[T], _id: int, db: Optional[Session] = None) -> Optional[T]:
         return db.query(cls).get(_id)
+    
+    @classmethod
+    @with_db_session
+    def find_by(cls: Type[T], db: Optional[Session] = None, **kwargs) -> Optional[T]:
+        return db.query(cls).filter_by(**kwargs).first()
 
     @classmethod
     @with_db_session
