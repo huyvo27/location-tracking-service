@@ -7,7 +7,7 @@ API_PATH = Path(__file__).parent.parent / "api"
 API_PATH_V1 = API_PATH / "v1"
 
 
-def auto_include_routers(package: str, path: Path):
+def auto_include_routers(package: str, path: Path) -> APIRouter:
     """
     Dynamically imports and includes FastAPI routers from a specified package and path.
 
@@ -36,8 +36,4 @@ def auto_include_routers(package: str, path: Path):
     return router
 
 
-router = auto_include_routers("app.api", API_PATH)
-
-v1_router = auto_include_routers("app.api.v1", API_PATH_V1)
-
-router.include_router(v1_router, prefix="/v1")
+v1_router = auto_include_routers(package="app.api.v1", path=API_PATH_V1)

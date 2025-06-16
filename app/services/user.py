@@ -66,7 +66,7 @@ class UserService:
             role=user.role if data.role is None else data.role.value,
         )
 
-    def get(self, user_uuid: str)-> User:
+    def get(self, user_uuid: str) -> User:
         exist_user = User.find_by(db=self.db, uuid=user_uuid)
         if exist_user is None:
             raise UserNotFound()

@@ -20,6 +20,7 @@ def with_db_session(func: Callable) -> Callable:
             with SessionLocal() as db:
                 return func(cls, *args, db=db, **kwargs)
         return func(cls, *args, db=db, **kwargs)
+
     return wrapper
 
 
@@ -57,7 +58,7 @@ class BareBaseModel(Base):
     @with_db_session
     def find(cls: Type[T], _id: int, db: Optional[Session] = None) -> Optional[T]:
         return db.query(cls).get(_id)
-    
+
     @classmethod
     @with_db_session
     def find_by(cls: Type[T], db: Optional[Session] = None, **kwargs) -> Optional[T]:

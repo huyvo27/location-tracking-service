@@ -12,12 +12,14 @@ class Group(BareBaseModel):
 
     owner = relationship("User", back_populates="owned_groups")
 
-    memberships = relationship("Membership", back_populates="group", cascade="all, delete-orphan")
+    memberships = relationship(
+        "Membership", back_populates="group", cascade="all, delete-orphan"
+    )
 
     members = relationship(
-    "User",
-    secondary="memberships",
-    back_populates="groups",
-    overlaps="user,group,memberships",
-    lazy="selectin"
-)
+        "User",
+        secondary="memberships",
+        back_populates="groups",
+        overlaps="user,group,memberships",
+        lazy="selectin",
+    )

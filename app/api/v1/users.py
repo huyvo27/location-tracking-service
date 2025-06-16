@@ -95,7 +95,9 @@ def update_me(
     dependencies=[Depends(login_required)],
     response_model=Response[UserItemResponse],
 )
-def detail(user_uuid: str, user_service: UserService = Depends(get_user_service)) -> Any:
+def detail(
+    user_uuid: str, user_service: UserService = Depends(get_user_service)
+) -> Any:
     """
     API get Detail User
     """
@@ -124,7 +126,9 @@ def update(
     dependencies=[permission_required(UserRole.SYS_ADMIN.value)],
     response_model=Response[UserItemResponse],
 )
-def delete(user_uuid: str, user_service: UserService = Depends(get_user_service)) -> Any:
+def delete(
+    user_uuid: str, user_service: UserService = Depends(get_user_service)
+) -> Any:
     """
     API delete User
     """
