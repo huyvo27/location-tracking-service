@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -42,7 +43,7 @@ class UserUpdateRequest(BaseModel):
 
 
 class UserItemResponse(UserBase):
-    uuid: str
+    uuid: UUID
     full_name: Optional[str]
     username: str
     email: EmailStr

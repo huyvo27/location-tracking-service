@@ -12,7 +12,7 @@ from app.utils.enums import UserRole
 
 
 class User(BareBaseModel):
-    uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
     full_name = Column(String, index=True)
     username = Column(String(255), unique=True, index=True)
     email = Column(String, unique=True, index=True, nullable=True)
@@ -33,3 +33,6 @@ class User(BareBaseModel):
     overlaps="group,user,memberships",
     lazy="selectin"
 )
+    @property
+    def uuid_str(self):
+        return str(self.uuid)

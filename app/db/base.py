@@ -7,7 +7,7 @@ from typing import Callable, Type, TypeVar, Optional
 from sqlalchemy import Column, Integer, DateTime
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.orm import Session
-from .database import SessionLocal
+from .session import SessionLocal
 
 p = inflect.engine()
 T = TypeVar("T", bound="BareBaseModel")

@@ -22,7 +22,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode = data.copy()
     iat = datetime.now(timezone.utc)
     expire = iat + (
-        expires_delta or timedelta(settings.ACCESS_TOKEN_EXPIRE_SECONDS)
+        expires_delta or timedelta(seconds=settings.ACCESS_TOKEN_EXPIRE_SECONDS)
     )
     to_encode.update({"exp": expire, "iat": iat})
     return jwt.encode(

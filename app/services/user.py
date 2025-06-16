@@ -1,5 +1,4 @@
 from typing import Optional
-from fastapi_sqlalchemy import db
 from sqlalchemy import or_, orm
 
 from app.models.user import User
