@@ -28,7 +28,7 @@ class User(BareBaseModel):
     )
 
     memberships = relationship(
-        "Membership", back_populates="user", cascade="all, delete-orphan"
+        "Membership", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
 
     groups = relationship(

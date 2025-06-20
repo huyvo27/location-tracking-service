@@ -1,24 +1,24 @@
 import logging
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.core.security import hash_password
 from app.config import settings
-from app.db import SessionLocal
+from app.db import AsyncSessionLocal
 from app.utils.enums import UserRole
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def create_admin_user(db: Session):
+async def create_admin_user(db: AsyncSession):
     try:
-        existing_admin = User.filter_by(
+        existing_admin = await User.find_by(
             db=db, username=settings.DEFAULT_ADMIN_USERNAME
-        ).first()
+        )
 
         if not existing_admin:
             hashed_password = hash_password(settings.DEFAULT_ADMIN_PASSWORD)
-            admin_user = User.create(
+            admin_user = await User.create(
                 db=db,
                 full_name="Admin User",
                 username=settings.DEFAULT_ADMIN_USERNAME,
@@ -36,9 +36,6 @@ def create_admin_user(db: Session):
         raise
 
 
-def setup_system_admin():
-    db = SessionLocal()
-    try:
-        create_admin_user(db)
-    finally:
-        db.close()
+async def setup_system_admin():
+    async with AsyncSessionLocal() as db:
+        await create_admin_user(db)

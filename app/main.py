@@ -1,9 +1,6 @@
-from asyncio import to_thread
 from contextlib import asynccontextmanager
-from pathlib import Path
 import uvicorn
 from fastapi import FastAPI
-from fastapi_sqlalchemy import DBSessionMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from app.core.router import v1_router
@@ -14,12 +11,12 @@ from app.custom_docs import configure_docs
 from app.initialization import setup_system_admin
 
 
-Base.metadata.create_all(bind=engine)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await to_thread(setup_system_admin)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    await setup_system_admin()
     yield
 
 
@@ -41,8 +38,6 @@ def get_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    app.add_middleware(DBSessionMiddleware, db_url=settings.DATABASE_URL)
 
     app.include_router(v1_router, prefix=f"{settings.API_PREFIX}/v1")
 

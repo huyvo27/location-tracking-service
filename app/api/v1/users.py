@@ -1,7 +1,8 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import (
     login_required,
     permission_required,
@@ -12,7 +13,7 @@ from app.utils.pagination import PaginationParams, paginate
 from app.utils.enums import UserRole
 from app.schemas.response import Response, PaginatedResponse
 from app.schemas.user import (
-    UserItemResponse,
+    UserResponse,
     UserCreateRequest,
     UserUpdateMeRequest,
     UserUpdateRequest,
@@ -24,7 +25,7 @@ from app.models.user import User
 router = APIRouter()
 
 
-def get_user_service(db: Session = Depends(get_db)) -> UserService:
+async def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
     """
     Dependency to get the UserService instance
     """
@@ -34,39 +35,39 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 @router.get(
     "",
     dependencies=[Depends(login_required)],
-    response_model=PaginatedResponse[UserItemResponse],
+    response_model=PaginatedResponse[UserResponse],
 )
-def get(params: PaginationParams = Depends(), db: Session = Depends(get_db)) -> Any:
+async def list(params: PaginationParams = Depends(), db: AsyncSession = Depends(get_db)) -> Any:
     """
     API Get list User
     """
-    _query = db.query(User)
-    paginated_users = paginate(query=_query, params=params, schema=UserItemResponse)
+    stmt = select(User)
+    paginated_users = await paginate(session=db, stmt=stmt, params=params, schema=UserResponse)
 
     return PaginatedResponse.success(data=paginated_users)
 
 
 @router.post(
     "",
-    dependencies=[permission_required("admin")],
-    response_model=Response[UserItemResponse],
+    dependencies=[permission_required(UserRole.SYS_ADMIN.value)],
+    response_model=Response[UserResponse],
 )
-def create(
+async def create(
     user_data: UserCreateRequest, user_service: UserService = Depends(get_user_service)
 ) -> Any:
     """
     API Create User
     """
-    new_user = user_service.create_user(user_data)
+    new_user = await user_service.create_user(user_data)
     return Response.success(data=new_user)
 
 
 @router.get(
     "/me",
     dependencies=[Depends(login_required)],
-    response_model=Response[UserItemResponse],
+    response_model=Response[UserResponse],
 )
-def detail_me(current_user: User = Depends(get_current_user)) -> Any:
+async def detail_me(current_user: User = Depends(get_current_user)) -> Any:
     """
     API get detail current User
     """
@@ -76,9 +77,9 @@ def detail_me(current_user: User = Depends(get_current_user)) -> Any:
 @router.put(
     "/me",
     dependencies=[Depends(login_required)],
-    response_model=Response[UserItemResponse],
+    response_model=Response[UserResponse],
 )
-def update_me(
+async def update_me(
     user_data: UserUpdateMeRequest,
     current_user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
@@ -86,30 +87,31 @@ def update_me(
     """
     API Update current User
     """
-    updated_user = user_service.update_me(data=user_data, current_user=current_user)
+    updated_user = await user_service.update_me(data=user_data, current_user=current_user)
     return Response.success(data=updated_user)
 
 
 @router.get(
     "/{user_uuid}",
     dependencies=[Depends(login_required)],
-    response_model=Response[UserItemResponse],
+    response_model=Response[UserResponse],
 )
-def detail(
+async def detail(
     user_uuid: str, user_service: UserService = Depends(get_user_service)
 ) -> Any:
     """
     API get Detail User
     """
-    return Response.success(data=user_service.get(user_uuid))
+    user = await user_service.get(user_uuid)
+    return Response.success(data=user)
 
 
 @router.put(
     "/{user_uuid}",
     dependencies=[permission_required(UserRole.SYS_ADMIN.value)],
-    response_model=Response[UserItemResponse],
+    response_model=Response[UserResponse],
 )
-def update(
+async def update(
     user_uuid: str,
     user_data: UserUpdateRequest,
     user_service: UserService = Depends(get_user_service),
@@ -117,21 +119,20 @@ def update(
     """
     API update User
     """
-    updated_user = user_service.update(user_uuid=user_uuid, data=user_data)
+    updated_user = await user_service.update(user_uuid=user_uuid, data=user_data)
     return Response.success(data=updated_user)
 
 
 @router.delete(
     "/{user_uuid}",
     dependencies=[permission_required(UserRole.SYS_ADMIN.value)],
-    response_model=Response[UserItemResponse],
+    response_model=Response[UserResponse],
 )
-def delete(
+async def delete(
     user_uuid: str, user_service: UserService = Depends(get_user_service)
 ) -> Any:
     """
     API delete User
     """
-
-    user_service.delete(user_uuid=user_uuid)
+    await user_service.delete(user_uuid=user_uuid)
     return Response.success()

@@ -1,5 +1,6 @@
 from typing import Optional
-from sqlalchemy import or_, orm
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.core.security import verify_password, hash_password
@@ -8,29 +9,29 @@ from app.exceptions import UserNotFound, UsernameEmailAlreadyExists
 
 
 class UserService:
-    def __init__(self, db: orm.Session) -> None:
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    def authenticate(self, username: str, password: str) -> Optional[User]:
-        user = (
-            self.db.query(User)
-            .filter(or_(User.email == username, User.username == username))
-            .first()
+    async def authenticate(self, username: str, password: str) -> Optional[User]:
+        stmt = select(User).where(
+            or_(User.email == username, User.username == username)
         )
+        result = await self.db.execute(stmt)
+        user = result.scalars().first()
+
         if user and verify_password(password, user.hashed_password):
             return user
         return None
 
-    def create_user(self, data: UserCreateRequest):
-        exist_user = (
-            self.db.query(User)
-            .filter(or_(User.email == data.email, User.username == data.username))
-            .first()
-        )
+    async def create_user(self, data: UserCreateRequest):
+        stmt = select(User).where(or_(User.email == data.email, User.username == data.username))
+        result = await self.db.execute(stmt)
+        exist_user = result.scalars().first()
+
         if exist_user:
             raise UsernameEmailAlreadyExists()
 
-        new_user = User.create(
+        new_user = await User.create(
             db=self.db,
             username=data.username,
             phone_number=data.phone_number,
@@ -43,9 +44,9 @@ class UserService:
 
         return new_user
 
-    def update_me(self, data: UserUpdateMeRequest, current_user: User):
+    async def update_me(self, data: UserUpdateMeRequest, current_user: User):
 
-        return current_user.update(
+        return await current_user.update(
             db=self.db,
             full_name=data.full_name,
             phone_number=data.phone_number,
@@ -53,10 +54,10 @@ class UserService:
             hashed_password=hash_password(data.password) if data.password else None,
         )
 
-    def update(self, user_uuid: int, data: UserUpdateRequest):
-        user = self.get(user_uuid)
+    async def update(self, user_uuid: int, data: UserUpdateRequest):
+        user = await self.get(user_uuid)
 
-        return user.update(
+        return await user.update(
             db=self.db,
             full_name=data.full_name,
             phone_number=data.phone_number,
@@ -66,15 +67,15 @@ class UserService:
             role=user.role if data.role is None else data.role.value,
         )
 
-    def get(self, user_uuid: str) -> User:
-        exist_user = User.find_by(db=self.db, uuid=user_uuid)
+    async def get(self, user_uuid: str) -> User:
+        exist_user = await User.find_by(db=self.db, uuid=user_uuid)
         if exist_user is None:
             raise UserNotFound()
         return exist_user
 
-    def delete(self, user_uuid: str):
-        user = self.get(user_uuid)
+    async def delete(self, user_uuid: str):
+        user = await self.get(user_uuid)
         if user:
-            user.delete(db=self.db)
+            await user.delete(db=self.db)
             return True
         return False

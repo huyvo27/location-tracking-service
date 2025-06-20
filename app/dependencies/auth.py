@@ -1,11 +1,10 @@
 from typing import List, Union
 from fastapi.security import (
     HTTPBearer,
-    HTTPAuthorizationCredentials,
-    OAuth2PasswordBearer,
+    HTTPAuthorizationCredentials
 )
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import decode_access_token
 from app.dependencies.db import get_db
 from app.models.user import User
@@ -15,11 +14,11 @@ from app.utils.enums import UserRole
 oauth2_scheme = HTTPBearer(scheme_name="Authorization")
 
 
-def get_current_user(
+async def get_current_user(
     http_authorization_credentials: HTTPAuthorizationCredentials = Depends(
         oauth2_scheme
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> User:
     """
     Decode JWT token and return the current user from DB
@@ -34,19 +33,19 @@ def get_current_user(
             detail="Could not validate credentials",
         )
 
-    user = User.find_by(db=db, uuid=token_data.sub)
+    user = await User.find_by(db=db, uuid=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     return user
 
 
-def login_required(current_user: User = Depends(get_current_user)):
+async def login_required(current_user: User = Depends(get_current_user)):
     return current_user
 
 
 def permission_required(*roles):
-    def wrapper(user: User = Depends(get_current_user)):
+    async def wrapper(user: User = Depends(get_current_user)):
         if roles and user.role not in roles:
             raise HTTPException(status_code=403, detail="Permission Denied")
         return user
@@ -72,7 +71,7 @@ class PermissionRequired:
         self.log_access = log_access
         self.enabled = enabled
 
-    def __call__(
+    async def __call__(
         self,
         user: User = Depends(get_current_user),
     ) -> User:
