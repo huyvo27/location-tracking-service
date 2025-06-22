@@ -1,12 +1,13 @@
-from typing import Optional, TypeVar, Generic
-from pydantic import BaseModel
+from typing import Generic, Optional, TypeVar
 
 from app.utils.pagination import PaginatedData
+
+from .base import BaseSchema
 
 T = TypeVar("T")
 
 
-class Response(BaseModel, Generic[T]):
+class Response(BaseSchema, Generic[T]):
     code: str
     message: str
     data: Optional[T] = None

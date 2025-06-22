@@ -1,9 +1,11 @@
 import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.user import User
-from app.core.security import hash_password
+
 from app.config import settings
+from app.core.security import hash_password
 from app.db import AsyncSessionLocal
+from app.models.user import User
 from app.utils.enums import UserRole
 
 logger = logging.getLogger(__name__)

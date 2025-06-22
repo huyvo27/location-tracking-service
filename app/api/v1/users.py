@@ -3,24 +3,24 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.dependencies import (
-    login_required,
-    permission_required,
     get_current_user,
     get_db,
+    login_required,
+    permission_required,
 )
-from app.utils.pagination import PaginationParams, paginate
-from app.utils.enums import UserRole
-from app.schemas.response import Response, PaginatedResponse
+from app.models.user import User
+from app.schemas.response import PaginatedResponse, Response
 from app.schemas.user import (
-    UserResponse,
     UserCreateRequest,
+    UserResponse,
     UserUpdateMeRequest,
     UserUpdateRequest,
 )
 from app.services.user import UserService
-from app.models.user import User
-
+from app.utils.enums import UserRole
+from app.utils.pagination import PaginationParams, paginate
 
 router = APIRouter()
 
@@ -37,12 +37,16 @@ async def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
     dependencies=[Depends(login_required)],
     response_model=PaginatedResponse[UserResponse],
 )
-async def list(params: PaginationParams = Depends(), db: AsyncSession = Depends(get_db)) -> Any:
+async def list(
+    params: PaginationParams = Depends(), db: AsyncSession = Depends(get_db)
+) -> Any:
     """
     API Get list User
     """
     stmt = select(User)
-    paginated_users = await paginate(session=db, stmt=stmt, params=params, schema=UserResponse)
+    paginated_users = await paginate(
+        session=db, stmt=stmt, params=params, schema=UserResponse
+    )
 
     return PaginatedResponse.success(data=paginated_users)
 
@@ -87,7 +91,9 @@ async def update_me(
     """
     API Update current User
     """
-    updated_user = await user_service.update_me(data=user_data, current_user=current_user)
+    updated_user = await user_service.update_me(
+        data=user_data, current_user=current_user
+    )
     return Response.success(data=updated_user)
 
 

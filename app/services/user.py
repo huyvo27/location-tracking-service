@@ -1,11 +1,12 @@
 from typing import Optional
+
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import hash_password, verify_password
+from app.exceptions import UsernameEmailAlreadyExists, UserNotFound
 from app.models.user import User
-from app.core.security import verify_password, hash_password
 from app.schemas.user import UserCreateRequest, UserUpdateMeRequest, UserUpdateRequest
-from app.exceptions import UserNotFound, UsernameEmailAlreadyExists
 
 
 class UserService:
@@ -24,7 +25,9 @@ class UserService:
         return None
 
     async def create_user(self, data: UserCreateRequest):
-        stmt = select(User).where(or_(User.email == data.email, User.username == data.username))
+        stmt = select(User).where(
+            or_(User.email == data.email, User.username == data.username)
+        )
         result = await self.db.execute(stmt)
         exist_user = result.scalars().first()
 

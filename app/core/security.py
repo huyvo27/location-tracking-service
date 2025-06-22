@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta, timezone
 from typing import Optional
+
 from fastapi import HTTPException
-from jose import jwt, JWTError, ExpiredSignatureError
+from jose import ExpiredSignatureError, JWTError, jwt
+from passlib.context import CryptContext
 
 from app.config import settings
-from datetime import datetime, timedelta, timezone
-from passlib.context import CryptContext
 from app.schemas.token import TokenData
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

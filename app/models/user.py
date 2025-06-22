@@ -1,12 +1,12 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, DateTime
-from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
-from app.models.membership import Membership
-from app.models.group import Group
 
+from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from app.db.base import BareBaseModel
+from app.models.group import Group
+from app.models.membership import Membership
 from app.utils.enums import UserRole
 
 
@@ -28,7 +28,10 @@ class User(BareBaseModel):
     )
 
     memberships = relationship(
-        "Membership", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
+        "Membership",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
     groups = relationship(

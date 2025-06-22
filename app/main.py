@@ -1,13 +1,14 @@
 from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from app.core.router import v1_router
 from app.config import settings
 from app.core.exception_handlers import register_exception_handlers
-from app.db import Base, engine
+from app.core.router import v1_router
 from app.custom_docs import configure_docs
+from app.db import Base, engine
 from app.initialization import setup_system_admin
 
 

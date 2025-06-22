@@ -1,12 +1,13 @@
-from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
+from fastapi import HTTPException, Request
 from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.status import (
+    HTTP_400_BAD_REQUEST,
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
-    HTTP_400_BAD_REQUEST,
 )
+
 from app.exceptions.base import CustomAPIException
 from app.schemas.response import Response
 

@@ -1,7 +1,8 @@
 import importlib
 import pkgutil
-from fastapi import APIRouter
 from pathlib import Path
+
+from fastapi import APIRouter
 
 API_PATH = Path(__file__).parent.parent / "api"
 API_PATH_V1 = API_PATH / "v1"

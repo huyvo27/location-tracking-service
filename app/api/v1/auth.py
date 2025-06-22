@@ -1,14 +1,15 @@
 from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token
 from app.dependencies.db import get_db
+from app.exceptions import InactiveUser, InvalidLogin
 from app.schemas.response import Response
 from app.schemas.token import Token
 from app.services.user import UserService
-from app.exceptions import InvalidLogin, InactiveUser
 
 router = APIRouter()
 

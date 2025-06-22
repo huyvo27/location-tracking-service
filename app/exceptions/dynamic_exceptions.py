@@ -1,5 +1,6 @@
-from configparser import ConfigParser
 import os
+from configparser import ConfigParser
+
 from app.exceptions.base import CustomAPIException
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

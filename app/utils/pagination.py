@@ -1,7 +1,8 @@
 from typing import Any, Generic, Sequence, Type, TypeVar
+
 from pydantic import BaseModel, Field
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 T = TypeVar("T")
 
@@ -29,12 +30,14 @@ async def paginate(
     params: PaginationParams,
     schema: Type[BaseModel],
 ) -> PaginatedData:
-    
+
     count_stmt = select(func.count()).select_from(stmt.subquery())
     total_result = await session.execute(count_stmt)
     total = total_result.scalar_one()
 
-    paginated_stmt = stmt.offset((params.page - 1) * params.page_size).limit(params.page_size)
+    paginated_stmt = stmt.offset((params.page - 1) * params.page_size).limit(
+        params.page_size
+    )
     result = await session.execute(paginated_stmt)
     items = result.scalars().all()
 

@@ -2,29 +2,33 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import ConfigDict, EmailStr, Field
 
 from app.utils.enums import UserRole
 
+from .base import BaseSchema
 
-class UserBase(BaseModel):
+
+class UserBase(BaseSchema):
     full_name: Optional[str] = Field(None, max_length=100)
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$")
     is_active: bool = True
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
 
 class UserCreateRequest(UserBase):
-    username: str = Field(..., min_length=3, max_length=20, pattern=r"^[a-zA-Z0-9_]+$", description="Username must be alphanumeric and between 3 to 20 characters long")
+    username: str = Field(
+        ...,
+        min_length=3,
+        max_length=20,
+        pattern=r"^[a-zA-Z0-9_]+$",
+        description="Username must be alphanumeric and between 3 to 20 characters long",
+    )
     password: str = Field(..., min_length=8, max_length=128)
     role: UserRole = UserRole.USER
 
 
-class UserUpdateRequest(BaseModel):
+class UserUpdateRequest(BaseSchema):
     full_name: Optional[str] = Field(None, max_length=100)
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$")
@@ -38,7 +42,7 @@ class UserUpdateMeRequest(UserUpdateRequest):
     role: Optional[UserRole] = Field(None, exclude=True)
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseSchema):
     uuid: UUID
     username: str
     email: EmailStr
