@@ -1,12 +1,18 @@
 from typing import Optional
 
-from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password, verify_password
 from app.exceptions import UsernameEmailAlreadyExists, UserNotFound
 from app.models.user import User
-from app.schemas.user import UserCreateRequest, UserUpdateMeRequest, UserUpdateRequest
+from app.schemas.user import (
+    UserCreateRequest,
+    UserListRequest,
+    UserRegisterRequest,
+    UserUpdateMeRequest,
+    UserUpdateRequest,
+)
+from app.utils.enums import UserRole
 
 
 class UserService:
@@ -14,25 +20,24 @@ class UserService:
         self.db = db
 
     async def authenticate(self, username: str, password: str) -> Optional[User]:
-        stmt = select(User).where(
-            or_(User.email == username, User.username == username)
+        user = await User.find_by(
+            db=self.db, username=username, email=username, use_or=True
         )
-        result = await self.db.execute(stmt)
-        user = result.scalars().first()
 
         if user and verify_password(password, user.hashed_password):
             return user
         return None
 
     async def create_user(self, data: UserCreateRequest):
-        stmt = select(User).where(
-            or_(User.email == data.email, User.username == data.username)
+        exist_user = await User.find_by(
+            db=self.db, username=data.username, email=data.email, use_or=True
         )
-        result = await self.db.execute(stmt)
-        exist_user = result.scalars().first()
 
         if exist_user:
             raise UsernameEmailAlreadyExists()
+
+        is_active = data.is_active if hasattr(data, "is_active") else True
+        role = data.role if hasattr(data, "role") else UserRole.USER
 
         new_user = await User.create(
             db=self.db,
@@ -41,14 +46,16 @@ class UserService:
             full_name=data.full_name,
             email=data.email,
             hashed_password=hash_password(data.password),
-            is_active=data.is_active,
-            role=data.role.value,
+            is_active=is_active,
+            role=role.value,
         )
 
         return new_user
 
-    async def update_me(self, data: UserUpdateMeRequest, current_user: User):
+    async def register_user(self, data: UserRegisterRequest):
+        return await self.create_user(data)
 
+    async def update_me(self, data: UserUpdateMeRequest, current_user: User):
         return await current_user.update(
             db=self.db,
             full_name=data.full_name,
@@ -75,6 +82,15 @@ class UserService:
         if exist_user is None:
             raise UserNotFound()
         return exist_user
+
+    async def list(self, params: UserListRequest, as_stmt: bool = False):
+        contains = {}
+        if params.search:
+            contains["full_name"] = params.search
+            contains["username"] = params.search
+            contains["email"] = params.search
+
+        return User.filter_by(db=self.db, contains=contains, as_stmt=as_stmt)
 
     async def delete(self, user_uuid: str):
         user = await self.get(user_uuid)

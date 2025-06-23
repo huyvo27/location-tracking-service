@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Generic, Sequence, Type, TypeVar
 
 from pydantic import BaseModel, Field
@@ -25,20 +26,23 @@ class PaginatedData(BaseModel, Generic[T]):
 
 
 async def paginate(
-    session: AsyncSession,
+    db: AsyncSession,
     stmt: Any,
     params: PaginationParams,
     schema: Type[BaseModel],
 ) -> PaginatedData:
 
-    count_stmt = select(func.count()).select_from(stmt.subquery())
-    total_result = await session.execute(count_stmt)
+    if asyncio.iscoroutine(stmt):
+        stmt = await stmt
+
+    total_result = await db.execute(select(func.count()).select_from(stmt.subquery()))
+
     total = total_result.scalar_one()
 
     paginated_stmt = stmt.offset((params.page - 1) * params.page_size).limit(
         params.page_size
     )
-    result = await session.execute(paginated_stmt)
+    result = await db.execute(paginated_stmt)
     items = result.scalars().all()
 
     metadata = Metadata(

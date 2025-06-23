@@ -1,11 +1,14 @@
-from functools import wraps
-import inflect
 from datetime import datetime, timezone
-from typing import Callable, Type, TypeVar, Optional
+from functools import wraps
+from typing import Callable, Optional, Type, TypeVar
 
-from sqlalchemy import Column, Integer, DateTime, select
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
+import inflect
+from sqlalchemy import Column, DateTime, Integer, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.declarative import as_declarative, declared_attr
+
+from app.exceptions.base import DatabaseError
+
 from .session import AsyncSessionLocal
 
 p = inflect.engine()
@@ -15,10 +18,14 @@ T = TypeVar("T", bound="BareBaseModel")
 def with_async_db_session(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(cls_or_self, *args, db: Optional[AsyncSession] = None, **kwargs):
-        if db is None:
-            async with AsyncSessionLocal() as db:
-                return await func(cls_or_self, *args, db=db, **kwargs)
-        return await func(cls_or_self, *args, db=db, **kwargs)
+        try:
+            if db is None:
+                async with AsyncSessionLocal() as db:
+                    return await func(cls_or_self, *args, db=db, **kwargs)
+            return await func(cls_or_self, *args, db=db, **kwargs)
+        except Exception as e:
+            raise DatabaseError(f"Query failed: {str(e)}")
+
     return wrapper
 
 
@@ -54,27 +61,72 @@ class BareBaseModel(Base):
 
     @classmethod
     @with_async_db_session
-    async def find(cls: Type[T], _id: int, db: Optional[AsyncSession] = None) -> Optional[T]:
+    async def find(
+        cls: Type[T], _id: int, db: Optional[AsyncSession] = None
+    ) -> Optional[T]:
         result = await db.get(cls, _id)
         return result
 
     @classmethod
     @with_async_db_session
-    async def find_by(cls: Type[T], db: Optional[AsyncSession] = None, **kwargs) -> Optional[T]:
-        stmt = select(cls).filter_by(**kwargs)
+    async def find_by(
+        cls: Type[T], db: Optional[AsyncSession] = None, use_or: bool = False, **kwargs
+    ) -> Optional[T]:
+        stmt = select(cls)
+        filters = []
+        for key, value in kwargs.items():
+            if not hasattr(cls, key):
+                raise AttributeError(f"Invalid field: {key}")
+            column = getattr(cls, key)
+            filters.append(column == value)
+
+        if filters:
+            if use_or:
+                stmt = stmt.where(or_(*filters))
+            else:
+                stmt = stmt.where(*filters)
+
         result = await db.execute(stmt)
         return result.scalars().first()
 
     @classmethod
     @with_async_db_session
-    async def all(cls: Type[T], db: Optional[AsyncSession] = None, ):
+    async def all(
+        cls: Type[T],
+        db: Optional[AsyncSession] = None,
+    ):
         result = await db.execute(select(cls))
         return result.scalars().all()
 
     @classmethod
     @with_async_db_session
-    async def filter_by(cls: Type[T], db: Optional[AsyncSession] = None, **kwargs):
+    async def filter_by(
+        cls: Type[T],
+        db: Optional[AsyncSession] = None,
+        contains: dict = None,
+        offset: int = 0,
+        limit: int = 50,
+        case_insensitive: bool = True,
+        as_stmt: bool = False,
+        **kwargs,
+    ):
         stmt = select(cls).filter_by(**kwargs)
+
+        if contains:
+            filters = []
+            for key, value in contains.items():
+                if not hasattr(cls, key):
+                    raise AttributeError(f"Invalid field: {key}")
+                column = getattr(cls, key)
+                if case_insensitive:
+                    filters.append(column.ilike(f"%{value}%"))
+                else:
+                    filters.append(column.like(f"%{value}%"))
+                stmt = stmt.where(*filters)
+        if as_stmt:
+            return stmt
+
+        stmt = stmt.offset(offset).limit(limit)
         result = await db.execute(stmt)
         return result.scalars().all()
 
@@ -85,9 +137,7 @@ class BareBaseModel(Base):
                 if hasattr(self, key):
                     setattr(self, key, value)
                 else:
-                    raise AttributeError(
-                        f"{key} is not a valid attribute of {self.__class__.__name__}"
-                    )
+                    raise AttributeError(f"Invalid field: {key}")
         await db.commit()
         await db.refresh(self)
         return self

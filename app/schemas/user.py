@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import ConfigDict, EmailStr, Field
 
 from app.utils.enums import UserRole
+from app.utils.pagination import PaginationParams
 
 from .base import BaseSchema
 
@@ -13,10 +14,9 @@ class UserBase(BaseSchema):
     full_name: Optional[str] = Field(None, max_length=100)
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$")
-    is_active: bool = True
 
 
-class UserCreateRequest(UserBase):
+class UserRegisterRequest(UserBase):
     username: str = Field(
         ...,
         min_length=3,
@@ -25,26 +25,37 @@ class UserCreateRequest(UserBase):
         description="Username must be alphanumeric and between 3 to 20 characters long",
     )
     password: str = Field(..., min_length=8, max_length=128)
-    role: UserRole = UserRole.USER
 
 
-class UserUpdateRequest(BaseSchema):
-    full_name: Optional[str] = Field(None, max_length=100)
-    email: Optional[EmailStr] = None
-    phone_number: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$")
+class UserCreateRequest(UserRegisterRequest):
+    role: UserRole = Field(UserRole.USER, description="User role, default is USER")
+    is_active: bool = Field(True, description="Indicates if the user is active or not")
+
+
+class UserUpdateMeRequest(UserBase):
     password: Optional[str] = Field(None, min_length=8, max_length=128)
-    is_active: Optional[bool] = None
-    role: Optional[UserRole] = None
 
 
-class UserUpdateMeRequest(UserUpdateRequest):
-    is_active: Optional[bool] = Field(None, exclude=True)
-    role: Optional[UserRole] = Field(None, exclude=True)
+class UserUpdateRequest(UserUpdateMeRequest):
+    role: UserRole = Field(UserRole.USER, description="User role, default is USER")
+    is_active: bool = Field(True, description="Indicates if the user is active or not")
 
 
-class UserResponse(BaseSchema):
+class UserResponse(UserBase):
     uuid: UUID
     username: str
-    email: EmailStr
     role: UserRole
+    is_active: bool
     last_login: Optional[datetime] = None
+
+
+class UserLimitedResponse(BaseSchema):
+    uuid: UUID
+    full_name: Optional[str] = None
+    is_active: bool
+
+
+class UserListRequest(PaginationParams):
+    search: Optional[str] = Field(
+        None, description="Search by name, username, or email"
+    )

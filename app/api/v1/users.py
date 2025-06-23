@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import (
+from app.dependencies import get_db
+from app.dependencies.auth import (
     get_current_user,
-    get_db,
     login_required,
     permission_required,
 )
@@ -14,13 +14,15 @@ from app.models.user import User
 from app.schemas.response import PaginatedResponse, Response
 from app.schemas.user import (
     UserCreateRequest,
+    UserLimitedResponse,
+    UserListRequest,
     UserResponse,
     UserUpdateMeRequest,
     UserUpdateRequest,
 )
 from app.services.user import UserService
 from app.utils.enums import UserRole
-from app.utils.pagination import PaginationParams, paginate
+from app.utils.pagination import paginate
 
 router = APIRouter()
 
@@ -32,21 +34,25 @@ async def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
     return UserService(db=db)
 
 
-@router.get(
-    "",
-    dependencies=[Depends(login_required)],
-    response_model=PaginatedResponse[UserResponse],
-)
+@router.get("")
 async def list(
-    params: PaginationParams = Depends(), db: AsyncSession = Depends(get_db)
+    params: UserListRequest = Depends(),
+    user_service: UserService = Depends(get_user_service),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(login_required),
 ) -> Any:
     """
     API Get list User
     """
-    stmt = select(User)
-    paginated_users = await paginate(
-        session=db, stmt=stmt, params=params, schema=UserResponse
+    stmt = await user_service.list(params=params, as_stmt=True)
+
+    schema = (
+        UserResponse
+        if current_user.role == UserRole.SYS_ADMIN.value
+        else UserLimitedResponse
     )
+
+    paginated_users = await paginate(db=db, stmt=stmt, params=params, schema=schema)
 
     return PaginatedResponse.success(data=paginated_users)
 

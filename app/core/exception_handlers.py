@@ -44,7 +44,7 @@ def register_exception_handlers(app):
         )
 
     @app.exception_handler(CustomAPIException)
-    async def custom_handler(request, exc: CustomAPIException):
+    async def custom_handler(request: Request, exc: CustomAPIException):
         response = Response.error(code=exc.code, message=exc.message)
         return JSONResponse(
             status_code=exc.http_code,
