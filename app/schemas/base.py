@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 def datetime_to_gmt_str(dt: datetime) -> str:
+    """Convert a datetime object to a GMT string in ISO 8601 format."""
     if not dt.tzinfo:
         dt = dt.replace(tzinfo=ZoneInfo("UTC"))
 
@@ -21,6 +22,7 @@ class BaseSchema(BaseModel):
 
     @classmethod
     def from_obj(cls, obj):
+        """Create a schema instance from an object."""
         return cls.model_validate(obj)
 
     def serializable_dict(self, **kwargs):

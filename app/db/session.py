@@ -3,7 +3,9 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 
-engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True, echo=settings.DEBUG)
+engine = create_async_engine(
+    settings.DATABASE_URL, pool_pre_ping=True, echo=settings.DEBUG
+)
 
 AsyncSessionLocal = sessionmaker(
     autocommit=False,

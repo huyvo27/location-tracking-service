@@ -105,7 +105,9 @@ async def update_me(
 
 @router.get("/{user_uuid}")
 async def detail(
-    user_uuid: str, user_service: UserService = Depends(get_user_service), current_user: User = Depends(login_required)
+    user_uuid: str,
+    user_service: UserService = Depends(get_user_service),
+    current_user: User = Depends(login_required),
 ) -> Any:
     """
     API get Detail User

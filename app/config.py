@@ -19,7 +19,9 @@ class Settings(BaseSettings):
     DATABASE_HOST: str = os.getenv("DATABASE_HOST", "")
     DATABASE_PORT: str = os.getenv("DATABASE_PORT", "")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
-    ACCESS_TOKEN_EXPIRE_SECONDS: int = os.getenv("ACCESS_TOKEN_EXPIRE_SECONDS", 60 * 60 * 24 * 3)
+    ACCESS_TOKEN_EXPIRE_SECONDS: int = os.getenv(
+        "ACCESS_TOKEN_EXPIRE_SECONDS", 60 * 60 * 24 * 3
+    )
     SECURITY_ALGORITHM: str = "HS256"
     LOGGING_CONFIG_FILE: str = os.path.join(BASE_DIR, "logging.ini")
     DEFAULT_ADMIN_USERNAME: str = os.getenv("DEFAULT_ADMIN_USERNAME", "sys_admin")
