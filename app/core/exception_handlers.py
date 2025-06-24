@@ -31,9 +31,15 @@ def register_exception_handlers(app):
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ):
+        try:
+            msg = exc.errors()[0].get("msg", "Invalid input")
+        except IndexError:
+            msg = "Invalid input"
+
         response = Response.error(
-            code="422", message="Validation Error", errors=exc.errors()
+            code="422", message= f"Validation Error: {msg}"
         )
+        # logger.info(f"Validation error: {exc.errors()}")
         return JSONResponse(
             status_code=HTTP_422_UNPROCESSABLE_ENTITY,
             content=jsonable_encoder(response, exclude_none=True),

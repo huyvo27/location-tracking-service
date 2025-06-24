@@ -219,6 +219,21 @@ class BareBaseModel(Base):
         return self
 
     @with_async_db_session
+    async def save(self, db: Optional[AsyncSession] = None) -> T:
+        """Save the current instance to the database.
+        Args:
+            db (AsyncSession): Database session.
+        Returns:
+            T: Saved instance.
+        Example:
+            await instance.save(db=db)
+        """
+        db.add(self)
+        await db.commit()
+        await db.refresh(self)
+        return self
+
+    @with_async_db_session
     async def delete(self, db: Optional[AsyncSession] = None):
         """Delete the current instance from the database.
         Args:
