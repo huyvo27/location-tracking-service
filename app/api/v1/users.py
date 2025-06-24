@@ -103,19 +103,20 @@ async def update_me(
     return Response.success(data=updated_user)
 
 
-@router.get(
-    "/{user_uuid}",
-    dependencies=[Depends(login_required)],
-    response_model=Response[UserResponse],
-)
+@router.get("/{user_uuid}")
 async def detail(
-    user_uuid: str, user_service: UserService = Depends(get_user_service)
+    user_uuid: str, user_service: UserService = Depends(get_user_service), current_user: User = Depends(login_required)
 ) -> Any:
     """
     API get Detail User
     """
     user = await user_service.get(user_uuid)
-    return Response.success(data=user)
+    schema = (
+        UserResponse
+        if current_user.role == UserRole.SYS_ADMIN.value
+        else UserLimitedResponse
+    )
+    return Response[schema].success(data=user)
 
 
 @router.put(

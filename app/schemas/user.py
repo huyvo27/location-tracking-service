@@ -13,7 +13,7 @@ from .base import BaseSchema
 class UserBase(BaseSchema):
     full_name: Optional[str] = Field(None, max_length=100)
     email: Optional[EmailStr] = None
-    phone_number: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$")
+    phone_number: Optional[str] = Field(None, pattern=r"^(\+?\d{10,15}|0\d{9,10})$")
 
 
 class UserRegisterRequest(UserBase):
@@ -44,6 +44,7 @@ class UserUpdateRequest(UserUpdateMeRequest):
 class UserResponse(UserBase):
     uuid: UUID
     username: str
+    phone_number: Optional[str] = None
     role: UserRole
     is_active: bool
     last_login: Optional[datetime] = None

@@ -90,7 +90,7 @@ class UserService:
             contains["username"] = params.search
             contains["email"] = params.search
 
-        return User.filter_by(db=self.db, contains=contains, as_stmt=as_stmt)
+        return await User.filter_by(db=self.db, contains=contains, as_stmt=as_stmt)
 
     async def delete(self, user_uuid: str):
         user = await self.get(user_uuid)
