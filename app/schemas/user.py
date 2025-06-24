@@ -24,7 +24,13 @@ class UserRegisterRequest(UserBase):
         pattern=r"^[a-zA-Z0-9_]+$",
         description="Username must be alphanumeric and between 3 to 20 characters long",
     )
-    password: str = Field(..., min_length=8, max_length=128)
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$",
+        description="Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character",
+    )
 
 
 class UserCreateRequest(UserRegisterRequest):
@@ -33,7 +39,13 @@ class UserCreateRequest(UserRegisterRequest):
 
 
 class UserUpdateMeRequest(UserBase):
-    password: Optional[str] = Field(None, min_length=8, max_length=128)
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$",
+        description="Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character",
+    )
 
 
 class UserUpdateRequest(UserUpdateMeRequest):
