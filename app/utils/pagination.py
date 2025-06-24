@@ -31,9 +31,17 @@ async def paginate(
     params: PaginationParams,
     schema: Type[BaseModel],
 ) -> PaginatedData:
-
-    if asyncio.iscoroutine(stmt):
-        stmt = await stmt
+    """Paginate the results of a SQLAlchemy statement.
+    Args:
+        db (AsyncSession): Database session.
+        stmt (Any): SQLAlchemy statement to paginate.
+        params (PaginationParams): Pagination parameters.
+        schema (Type[BaseModel]): Pydantic schema for the response items.
+    Returns:
+        PaginatedData: Paginated response containing items and metadata.
+    Example:
+        paginated_data = await paginate(db=db, stmt=my_stmt, params=PaginationParams(page=1, page_size=10), schema=MySchema)
+    """
 
     total_result = await db.execute(select(func.count()).select_from(stmt.subquery()))
 
