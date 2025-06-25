@@ -3,7 +3,12 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password, verify_password
-from app.exceptions import UsernameEmailAlreadyExists, UserNotFound
+from app.exceptions import (
+    InactiveUser,
+    InvalidLogin,
+    UsernameEmailAlreadyExists,
+    UserNotFound,
+)
 from app.models.user import User
 from app.schemas.user import (
     UserCreateRequest,
@@ -24,9 +29,13 @@ class UserService:
             db=self.db, username=username, email=username, use_or=True
         )
 
-        if user and verify_password(password, user.hashed_password):
-            return user
-        return None
+        if not user or not verify_password(password, user.hashed_password):
+            raise InvalidLogin()
+
+        if not user.is_active:
+            raise InactiveUser()
+
+        return user
 
     async def create_user(self, data: UserCreateRequest):
         exist_user = await User.find_by(
@@ -92,9 +101,10 @@ class UserService:
 
         return await User.filter_by(db=self.db, contains=contains, as_stmt=as_stmt)
 
-    async def delete(self, user_uuid: str):
-        user = await self.get(user_uuid)
-        if user:
+    async def delete(self, user_uuid: str) -> bool:
+        try:
+            user = await self.get(user_uuid)
             await user.delete(db=self.db)
             return True
-        return False
+        except UserNotFound:
+            return False

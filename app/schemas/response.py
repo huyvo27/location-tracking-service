@@ -8,6 +8,16 @@ T = TypeVar("T")
 
 
 class Response(BaseSchema, Generic[T]):
+    """
+    Example usage:
+        class UserSchema(BaseModel):
+            id: int
+            name: str
+
+        Response[UserSchema].success(data=user)
+        Response[UserSchema].error(code='001', message='User not found')
+    """
+
     code: str
     message: str
     data: Optional[T] = None
@@ -22,15 +32,13 @@ class Response(BaseSchema, Generic[T]):
 
 
 class PaginatedResponse(Response[PaginatedData[T]]):
+    """
+    Example usage:
+        class UserSchema(BaseModel):
+            id: int
+            name: str
+
+        PaginatedResponse[UserSchema].success(data=PaginatedData(items=[user], metadata=metadata))
+    """
+
     pass
-
-
-# Example usage
-# class UserSchema(BaseModel):
-#     id: int
-#     name: str
-#
-# Response[UserSchema].success(data=user)
-# Response[UserSchema].error(code='001', message='User not found')
-#
-# PaginatedResponse[UserSchema].success(data=PaginatedData(items=[user], metadata=metadata))

@@ -5,11 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db
-from app.dependencies.auth import (
-    get_current_user,
-    login_required,
-    permission_required,
-)
+from app.dependencies.auth import get_current_user, login_required, permission_required
 from app.models.user import User
 from app.schemas.response import PaginatedResponse, Response
 from app.schemas.user import (

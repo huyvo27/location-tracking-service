@@ -36,9 +36,7 @@ def register_exception_handlers(app):
         except IndexError:
             msg = "Invalid input"
 
-        response = Response.error(
-            code="422", message= f"Validation Error: {msg}"
-        )
+        response = Response.error(code="422", message=f"Validation Error: {msg}")
         # logger.info(f"Validation error: {exc.errors()}")
         return JSONResponse(
             status_code=HTTP_422_UNPROCESSABLE_ENTITY,

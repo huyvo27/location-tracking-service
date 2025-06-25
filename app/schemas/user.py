@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import EmailStr, Field, field_validator, ValidationError
+from pydantic import EmailStr, Field, field_validator
 
 from app.utils.enums import UserRole
 from app.utils.pagination import PaginationParams
@@ -28,12 +28,17 @@ class UserUpdateMeRequest(UserBase):
     @classmethod
     def validate_password(cls, v):
         import re
-        if (len(v) < 8 or
-            not re.search(r"[A-Z]", v) or
-            not re.search(r"[a-z]", v) or
-            not re.search(r"\d", v) or
-            not re.search(r"[@$!%*?&]", v)):
-            raise ValueError("Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character")
+
+        if (
+            len(v) < 8
+            or not re.search(r"[A-Z]", v)
+            or not re.search(r"[a-z]", v)
+            or not re.search(r"\d", v)
+            or not re.search(r"[@$!%*?&]", v)
+        ):
+            raise ValueError(
+                "Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character"
+            )
         return v
 
 
