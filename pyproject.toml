@@ -1,6 +1,78 @@
+[tool.poetry]
+name = "location_tracker"
+version = "0.1.0"
+description = "Location tracker API"
+authors = ["Huy Vo"]
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "0.115.12"
+sqlalchemy = "2.0.40"
+pydantic = "2.11.3"
+annotated-types = "0.7.0"
+anyio = "4.9.0"
+bcrypt = "<4.0"
+black = "25.1.0"
+certifi = "2025.1.31"
+cffi = "1.17.1"
+charset-normalizer = "3.4.1"
+click = "8.1.8"
+dnspython = "2.7.0"
+ecdsa = "0.19.1"
+email-validator = "2.2.0"
+exceptiongroup = "1.2.2"
+fastapi-sqlalchemy = "0.2.1"
+greenlet = "3.2.1"
+h11 = "0.16.0"
+idna = "3.10"
+importlib-metadata = "8.6.1"
+inflect = "7.5.0"
+mako = "1.3.10"
+markupsafe = "3.0.2"
+more-itertools = "10.7.0"
+mypy-extensions = "1.1.0"
+packaging = "25.0"
+passlib = "1.7.4"
+pathspec = "0.12.1"
+platformdirs = "4.3.7"
+psycopg = "3.2.9"
+psycopg-binary = "3.2.9"
+pyasn1 = "0.4.8"
+pycparser = "2.22"
+pydantic-settings = "2.9.1"
+pydantic-core = "2.33.1"
+python-dotenv = "1.1.0"
+python-jose = "3.4.0"
+requests = "2.32.3"
+rsa = "4.9.1"
+six = "1.17.0"
+sniffio = "1.3.1"
+starlette = "0.46.2"
+tomli = "2.2.1"
+typeguard = "4.4.2"
+typing-inspection = "0.4.0"
+typing-extensions = "4.13.2"
+urllib3 = "2.4.0"
+uuid = "1.30"
+uvicorn = "0.34.2"
+zipp = "3.21.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.0"
+black = "^25.1.0"
+flake8 = "^7.0.0"
+isort = "^5.13.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.0"
+
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py312']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -30,5 +102,5 @@ exclude = [".git", "__pycache__", ".venv", "build", "dist"]
 extend-ignore = ["E203", "W503"]
 
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
