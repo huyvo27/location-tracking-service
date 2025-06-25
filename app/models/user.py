@@ -4,13 +4,13 @@ from sqlalchemy import Boolean, Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.db.base import BareBaseModel
+from app.db.base import ORMBase
 from app.models.group import Group
 from app.models.membership import Membership
 from app.utils.enums import UserRole
 
 
-class User(BareBaseModel):
+class User(ORMBase):
     uuid = Column(
         UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True
     )

@@ -6,13 +6,14 @@ import inflect
 from sqlalchemy import Column, DateTime, Integer, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from sqlalchemy.orm import InstrumentedAttribute
 
 from app.exceptions.base import DatabaseError
 
 from .session import AsyncSessionLocal
 
 p = inflect.engine()
-T = TypeVar("T", bound="BareBaseModel")
+T = TypeVar("T", bound="ORMBase")
 
 
 def with_async_db_session(func: Callable) -> Callable:
@@ -24,7 +25,7 @@ def with_async_db_session(func: Callable) -> Callable:
                     return await func(cls_or_self, *args, db=db, **kwargs)
             return await func(cls_or_self, *args, db=db, **kwargs)
         except Exception as e:
-            raise DatabaseError(f"Query failed: {str(e)}")
+            raise DatabaseError(f"Operation failed: {str(e)}")
 
     return wrapper
 
@@ -39,16 +40,12 @@ class Base:
         return p.plural(cls.__name__.lower())
 
 
-class BareBaseModel(Base):
-    __abstract__ = True
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    updated_at = Column(
-        DateTime,
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
-    )
+class CRUDMixin:
+    @classmethod
+    def _field_validation(cls, field: str) -> None:
+        """Validate if the field exists in the model."""
+        if not hasattr(cls, field):
+            raise AttributeError(f"Invalid field: {field}")
 
     @classmethod
     @with_async_db_session
@@ -103,8 +100,7 @@ class BareBaseModel(Base):
         stmt = select(cls)
         filters = []
         for key, value in kwargs.items():
-            if not hasattr(cls, key):
-                raise AttributeError(f"Invalid field: {key}")
+            cls._field_validation(key)
             column = getattr(cls, key)
             filters.append(column == value)
 
@@ -122,17 +118,38 @@ class BareBaseModel(Base):
     async def all(
         cls: Type[T],
         db: Optional[AsyncSession] = None,
+        limit: int = 1000,
+        offset: int = 0,
+        order_by: InstrumentedAttribute = None,
+        order_desc: bool = False,
+        as_stmt: bool = False,
     ):
-        """Get all records of the model.
+        """Get all records from the model.
         Args:
             db (AsyncSession): Database session.
+            limit (int): Maximum number of records to return.
+            offset (int): Offset for pagination.
+            order_by (InstrumentedAttribute): Column to order by.
+            order_desc (bool): If True, order by descending.
+            as_stmt (bool): If True, return SQLAlchemy statement instead of results.
         Returns:
-            List[T]: List of all records of the model.
+            List[T] or SQLAlchemy statement: List of records or SQLAlchemy statement.
         Example:
-            await Model.all(db=db)
+            await Model.all(db=db, limit=10, offset=0, order_by=Model.created_at, order_desc=True)
         """
+        stmt = select(cls)
 
-        result = await db.execute(select(cls))
+        if order_by:
+            if order_desc:
+                stmt = stmt.order_by(order_by.desc())
+            else:
+                stmt = stmt.order_by(order_by)
+
+        if as_stmt:
+            return stmt
+
+        stmt = stmt.offset(offset).limit(limit)
+        result = await db.execute(stmt)
         return result.scalars().all()
 
     @classmethod
@@ -142,7 +159,9 @@ class BareBaseModel(Base):
         db: Optional[AsyncSession] = None,
         contains: dict = None,
         offset: int = 0,
-        limit: int = 50,
+        limit: int = 100,
+        order_by: InstrumentedAttribute = None,
+        order_desc: bool = False,
         case_insensitive: bool = True,
         as_stmt: bool = False,
         **kwargs,
@@ -168,20 +187,17 @@ class BareBaseModel(Base):
         for key, value in kwargs.items():
             if key.endswith("__in"):
                 field = key[:-4]
-                if not hasattr(cls, field):
-                    raise AttributeError(f"Invalid field: {field}")
+                cls._field_validation(field)
                 column = getattr(cls, field)
                 filters.append(column.in_(value))
             else:
-                if not hasattr(cls, key):
-                    raise AttributeError(f"Invalid field: {key}")
+                cls._field_validation(key)
                 column = getattr(cls, key)
                 filters.append(column == value)
 
         if contains:
             for key, value in contains.items():
-                if not hasattr(cls, key):
-                    raise AttributeError(f"Invalid field: {key}")
+                cls._field_validation(key)
                 column = getattr(cls, key)
                 if case_insensitive:
                     filters.append(column.ilike(f"%{value}%"))
@@ -210,10 +226,8 @@ class BareBaseModel(Base):
         """
         for key, value in kwargs.items():
             if value is not None:
-                if hasattr(self, key):
-                    setattr(self, key, value)
-                else:
-                    raise AttributeError(f"Invalid field: {key}")
+                self._field_validation(key)
+                setattr(self, key, value)
         await db.commit()
         await db.refresh(self)
         return self
@@ -243,3 +257,15 @@ class BareBaseModel(Base):
         """
         await db.delete(self)
         await db.commit()
+
+
+class ORMBase(Base, CRUDMixin):
+    __abstract__ = True
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+    )

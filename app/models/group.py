@@ -4,10 +4,10 @@ from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.db.base import BareBaseModel
+from app.db.base import ORMBase
 
 
-class Group(BareBaseModel):
+class Group(ORMBase):
     uuid = Column(
         UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True
     )
@@ -34,3 +34,10 @@ class Group(BareBaseModel):
         overlaps="user,group,memberships",
         lazy="selectin",
     )
+
+    @property
+    def owner_uuid(self) -> UUID:
+        """
+        Returns the UUID of the group owner.
+        """
+        return self.owner.uuid if self.owner else None
