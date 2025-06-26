@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import uuid
 
 import pytest
 from fastapi import HTTPException
@@ -7,6 +8,7 @@ from jose import jwt
 from app.core import security
 from app.schemas.token import TokenData
 from tests.config import settings
+from tests.ultils import generate_strong_password
 
 
 @pytest.fixture(autouse=True)
@@ -16,7 +18,7 @@ def patch_settings(monkeypatch):
 
 @pytest.fixture
 def password():
-    return "super_test_secret"
+    return generate_strong_password()
 
 
 @pytest.fixture
@@ -26,7 +28,7 @@ def hashed_password(password):
 
 @pytest.fixture
 def data():
-    return {"sub": "cd38a5de-7678-4ea9-94f1-0d9edbcd52a6"}
+    return {"sub": str(uuid.uuid4())}
 
 
 def test_hash_and_verify_password(password, hashed_password):
