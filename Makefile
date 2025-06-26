@@ -6,7 +6,13 @@ PORT = 8000
 
 # Commands
 install:
-	pip install -r requirements.txt
+	poetry install --only main
+
+install-dev:
+	poetry install --with dev
+
+install-test:
+	poetry install --with test
 
 run:
 	uvicorn $(APP_MODULE) --reload --host $(HOST) --port $(PORT) --env-file $(ENV_FILE)
