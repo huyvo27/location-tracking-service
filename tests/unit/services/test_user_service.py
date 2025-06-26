@@ -64,7 +64,7 @@ def update_data():
         password="str0ngP@ssw0rDUser04",
         email="user04@example.com",
         full_name="User04",
-        phone_number="0454456789",
+        phone_number="0454459789",
         is_active=True,
         role=UserRole.USER,
     )
@@ -74,6 +74,15 @@ def update_data():
 async def current_user(db_session):
     users = await User.all(db=db_session)
     return users[0]
+
+
+@pytest_asyncio.fixture(scope="module", autouse=True)
+async def cleanup(async_session):
+    yield
+    async with async_session() as session:
+        users = await User.all(db=session)
+        for user in users:
+            await user.delete(db=session)
 
 
 async def test_create_user_success(user_service, creation_data):
