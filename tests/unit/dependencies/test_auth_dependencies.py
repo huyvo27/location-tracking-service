@@ -1,3 +1,4 @@
+import uuid
 import pytest
 from fastapi import HTTPException, status
 
@@ -17,16 +18,20 @@ class DummyCreds:
     def __init__(self, credentials):
         self.credentials = credentials
 
+@pytest.fixture
+def token_data():
+    return TokenData(sub=str(uuid.uuid4()))
 
-async def test_get_token_data_valid(mocker):
+
+async def test_get_token_data_valid(mocker, token_data):
     mocker.patch(
         "app.dependencies.auth.decode_access_token",
-        return_value=TokenData(sub="user-uuid"),
+        return_value=token_data,
     )
     creds = DummyCreds("validtoken")
     result = await get_token_data(http_authorization_credentials=creds)
     assert isinstance(result, TokenData)
-    assert result.sub == "user-uuid"
+    assert result.sub == token_data.sub
 
 
 async def test_get_token_data_invalid(mocker):
@@ -40,19 +45,17 @@ async def test_get_token_data_invalid(mocker):
     assert exc.value.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-async def test_get_current_user_found(mocker):
+async def test_get_current_user_found(mocker, token_data):
     dummy_user = User()
     dummy_user.role = "user"
     mocker.patch("app.models.user.User.find_by", return_value=dummy_user)
-    token_data = TokenData(sub="user-uuid")
     db = object()
     result = await get_current_user(token_data=token_data, db=db)
     assert result is dummy_user
 
 
-async def test_get_current_user_not_found(mocker):
+async def test_get_current_user_not_found(mocker, token_data):
     mocker.patch("app.models.user.User.find_by", return_value=None)
-    token_data = TokenData(sub="user-uuid")
     db = object()
     with pytest.raises(Exception):
         await get_current_user(token_data=token_data, db=db)
