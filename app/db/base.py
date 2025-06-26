@@ -160,8 +160,6 @@ class CRUDMixin:
         contains: dict = None,
         offset: int = 0,
         limit: int = 100,
-        order_by: InstrumentedAttribute = None,
-        order_desc: bool = False,
         case_insensitive: bool = True,
         as_stmt: bool = False,
         **kwargs,
