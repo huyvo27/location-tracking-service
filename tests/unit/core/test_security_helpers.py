@@ -7,13 +7,14 @@ from jose import jwt
 
 from app.core import security
 from app.schemas.token import TokenData
-from tests.config import settings
 from tests.ultils import generate_strong_password
 
+SECRET_KEY = generate_strong_password()
+SECURITY_ALGORITHM = "HS256"
 
 @pytest.fixture(autouse=True)
 def patch_settings(monkeypatch):
-    monkeypatch.setattr("app.core.security.settings", settings)
+    monkeypatch.setattr("app.core.security.settings.SECRET_KEY", SECRET_KEY)
 
 
 @pytest.fixture
@@ -48,7 +49,7 @@ def test_create_access_token_with_custom_expiry(data):
     expires = timedelta(seconds=10)
     token = security.create_access_token(data, expires_delta=expires)
     payload = jwt.decode(
-        token, settings.SECRET_KEY, algorithms=[settings.SECURITY_ALGORITHM]
+        token, SECRET_KEY, algorithms=[SECURITY_ALGORITHM]
     )
     exp = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
     iat = datetime.fromtimestamp(payload["iat"], tz=timezone.utc)
