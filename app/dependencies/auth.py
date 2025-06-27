@@ -8,7 +8,7 @@ from app.exceptions import UserNotFound
 from app.models.user import User
 from app.schemas.token import TokenData
 
-oauth2_scheme = HTTPBearer(scheme_name="Authorization")
+oauth2_scheme = HTTPBearer(scheme_name="Authorization", auto_error=False)
 
 
 async def get_token_data(
@@ -21,7 +21,7 @@ async def get_token_data(
     """
     try:
         return decode_access_token(http_authorization_credentials.credentials)
-    except HTTPException as e:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

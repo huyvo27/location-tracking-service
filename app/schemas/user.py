@@ -17,8 +17,8 @@ class UserBase(BaseSchema):
 
 
 class UserUpdateMeRequest(UserBase):
-    password: str = Field(
-        ...,
+    password: Optional[str] = Field(
+        None,
         min_length=8,
         max_length=128,
         description="Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character",
@@ -50,6 +50,13 @@ class UserRegisterRequest(UserUpdateMeRequest):
         pattern=r"^[a-zA-Z0-9_]+$",
         description="Username must be alphanumeric and between 3 to 20 characters long",
     )
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        description="Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character",
+    )
+    email: EmailStr
 
 
 class UserCreateRequest(UserRegisterRequest):

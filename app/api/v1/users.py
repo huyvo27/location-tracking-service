@@ -70,10 +70,9 @@ async def create(
 
 @router.get(
     "/me",
-    dependencies=[Depends(login_required)],
     response_model=Response[UserResponse],
 )
-async def detail_me(current_user: User = Depends(get_current_user)) -> Any:
+async def detail_me(current_user: User = Depends(login_required)) -> Any:
     """
     API get detail current User
     """
@@ -82,12 +81,11 @@ async def detail_me(current_user: User = Depends(get_current_user)) -> Any:
 
 @router.put(
     "/me",
-    dependencies=[Depends(login_required)],
     response_model=Response[UserResponse],
 )
 async def update_me(
     user_data: UserUpdateMeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(login_required),
     user_service: UserService = Depends(get_user_service),
 ) -> Any:
     """
