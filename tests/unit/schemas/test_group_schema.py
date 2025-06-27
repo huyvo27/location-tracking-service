@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -14,6 +14,11 @@ from app.schemas.group import (
     MembershipResponse,
     SimpleGroupResponse,
 )
+
+
+@pytest.fixture
+def now():
+    return datetime.now(timezone.utc)
 
 
 def test_group_create_request_valid():
@@ -50,8 +55,7 @@ def test_group_join_request_valid():
     assert req.key == "supersecretkey"
 
 
-def test_group_update_location_request_valid():
-    now = datetime.utcnow()
+def test_group_update_location_request_valid(now):
     req = GroupUpdateLocationRequest(
         longitude=100.0,
         latitude=10.0,
@@ -80,9 +84,8 @@ def test_simple_group_response():
     assert resp.uuid == uuid
 
 
-def test_member_response_serialize():
+def test_member_response_serialize(now):
     uuid = uuid4()
-    now = datetime.utcnow()
     member = MemberResponse(user_uuid=uuid, user_full_name="Alice", joined_at=now)
     data = member.serialize()
     assert data["uuid"] == str(uuid)
@@ -90,10 +93,9 @@ def test_member_response_serialize():
     assert data["joined_at"] == now.isoformat()
 
 
-def test_group_detail_response_serialize():
+def test_group_detail_response_serialize(now):
     uuid = uuid4()
     owner_uuid = uuid4()
-    now = datetime.utcnow()
     member = MemberResponse(user_uuid=uuid4(), user_full_name="Bob", joined_at=now)
     group = GroupDetailResponse(
         name="group",
@@ -113,10 +115,9 @@ def test_group_detail_response_serialize():
     assert data["members"][0]["name"] == "Bob"
 
 
-def test_membership_response():
+def test_membership_response(now):
     user_uuid = uuid4()
     group_uuid = uuid4()
-    now = datetime.utcnow()
     resp = MembershipResponse(user_uuid=user_uuid, group_uuid=group_uuid, joined_at=now)
     assert resp.user_uuid == user_uuid
     assert resp.group_uuid == group_uuid

@@ -15,8 +15,11 @@ from app.schemas.user import (
 )
 from app.services.user import UserService
 from app.utils.enums import UserRole
-
-from tests.ultils import generate_strong_password, random_lower_string, generate_phone_number
+from tests.utils import (
+    generate_phone_number,
+    generate_strong_password,
+    random_lower_string,
+)
 
 pytestmark = pytest.mark.asyncio
 
@@ -80,7 +83,9 @@ async def existing_user(db_session, create_data):
     await user.delete(db=db_session)
 
 
-async def test_create_user_success_and_already_exists(user_service, create_data, db_session):
+async def test_create_user_success_and_already_exists(
+    user_service, create_data, db_session
+):
     # Create user
     user = await user_service.create_user(create_data)
     assert user.username == create_data.username
@@ -91,6 +96,7 @@ async def test_create_user_success_and_already_exists(user_service, create_data,
         await user_service.create_user(create_data)
 
     await user.delete(db=db_session)
+
 
 @pytest.mark.usefixtures("existing_user")
 async def test_authenticate_success(user_service, create_data):
@@ -146,7 +152,7 @@ async def test_list(db_session, user_service):
             username=name,
             full_name=name,
             email=f"{name}@gmail.com",
-            hashed_password=hash_password(generate_strong_password())
+            hashed_password=hash_password(generate_strong_password()),
         )
         users.append(user)
 

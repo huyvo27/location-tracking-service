@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -82,7 +82,7 @@ def test_user_response_fields():
         phone_number="0912345678",
         role=UserRole.USER,
         is_active=True,
-        last_login=datetime.utcnow(),
+        last_login=datetime.now(timezone.utc),
     )
     assert resp.username == "user123"
     assert resp.is_active

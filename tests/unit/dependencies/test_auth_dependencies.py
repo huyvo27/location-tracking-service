@@ -1,4 +1,5 @@
 import uuid
+
 import pytest
 from fastapi import HTTPException, status
 
@@ -17,6 +18,7 @@ pytestmark = pytest.mark.asyncio
 class DummyCreds:
     def __init__(self, credentials):
         self.credentials = credentials
+
 
 @pytest.fixture
 def token_data():

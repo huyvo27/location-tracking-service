@@ -8,7 +8,7 @@ from app.exceptions import (
     GroupNameAlreadyExists,
     InvalidGroupKey,
     UserNotFound,
-    UserNotMemberOfGroup,
+    UserNotFoundInGroup,
 )
 from app.models.group import Group
 from app.models.membership import Membership
@@ -221,7 +221,7 @@ async def test_kick_member_user_not_found(group_service, created_group):
 
 
 async def test_kick_member_not_member(group_service, created_group, non_member_user):
-    with pytest.raises(UserNotMemberOfGroup):
+    with pytest.raises(UserNotFoundInGroup):
         await group_service.kick_member(created_group, non_member_user.uuid)
 
 
