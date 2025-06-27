@@ -97,7 +97,7 @@ async def detail(group: Group = Depends(valid_group)) -> Response[GroupDetailRes
     "",
     response_model=Response[GroupDetailResponse],
     responses={
-        400: {"description": "Group name already exists"},
+        409: {"description": "Group name already exists"},
         400: {"description": "User already a member of a group"},
         422: {"description": "Invalid group data"},
     },
@@ -128,7 +128,7 @@ async def join_group(
     group: Group = Depends(valid_group),
     user: User = Depends(valid_user),
     group_service: GroupService = Depends(get_group_service),
-) -> Response[GroupDetailResponse]:
+) -> Response[MembershipResponse]:
     """
     API Join Group
     """
@@ -175,7 +175,7 @@ async def leave_group(
 
 
 @router.delete(
-    "/{group_uuid}/kick/{user_uuid}",
+    "/{group_uuid}/kick/{member_uuid}",
     dependencies=[Depends(ownership_required)],
     response_model=Response[None],
     responses={

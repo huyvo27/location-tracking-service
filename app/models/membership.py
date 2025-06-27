@@ -38,3 +38,17 @@ class Membership(Base, CRUDMixin):
         Returns the UUID of the group in this membership.
         """
         return self.group.uuid if self.group else None
+
+    @classmethod
+    async def add_membership(cls, db, user_id, group_id):
+        existing_membership = await cls.find_by(
+            db=db, user_id=user_id, group_id=group_id
+        )
+        if existing_membership:
+            print(
+                f"Membership for user_id={user_id}, group_id={group_id} already exists"
+            )
+            return existing_membership
+
+        membership = await cls.create(db=db, user_id=user_id, group_id=group_id)
+        return membership

@@ -7,7 +7,7 @@ from app.exceptions import (
     GroupNameAlreadyExists,
     InvalidGroupKey,
     UserNotFound,
-    UserNotMemberOfGroup,
+    UserNotFoundInGroup,
 )
 from app.models.group import Group
 from app.models.membership import Membership
@@ -38,8 +38,9 @@ class GroupService:
             hashed_key=hash_password(data.key),
             owner_id=user.id,
         )
-
-        await Membership.create(db=self.db, user_id=user.id, group_id=new_group.id)
+        await Membership.add_membership(
+            db=self.db, user_id=user.id, group_id=new_group.id
+        )
 
         return new_group
 
@@ -49,9 +50,11 @@ class GroupService:
         if not verify_password(params.key, group.hashed_key):
             raise InvalidGroupKey()
 
-        membership = await Membership.create(
+        membership = await Membership.add_membership(
             db=self.db, user_id=user.id, group_id=group.id
         )
+        group.member_count += 1
+        await group.save(db=self.db)
 
         return membership
 
@@ -90,7 +93,7 @@ class GroupService:
         )
 
         if not membership:
-            raise UserNotMemberOfGroup()
+            raise UserNotFoundInGroup()
 
         await membership.delete(db=self.db)
 

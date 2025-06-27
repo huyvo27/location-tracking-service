@@ -5,8 +5,7 @@ from typing import Callable, Optional, Type, TypeVar
 import inflect
 from sqlalchemy import Column, DateTime, Integer, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
-from sqlalchemy.orm import InstrumentedAttribute
+from sqlalchemy.orm import InstrumentedAttribute, as_declarative, declared_attr
 
 from app.exceptions.base import DatabaseError
 
@@ -38,6 +37,8 @@ class Base:
     @declared_attr
     def __tablename__(cls) -> str:
         return p.plural(cls.__name__.lower())
+
+    __mapper_args__ = {"confirm_deleted_rows": False}
 
 
 class CRUDMixin:
