@@ -36,5 +36,5 @@ def auto_include_routers(package: str, path: Path) -> APIRouter:
                 )
     return router
 
-
+base_router = auto_include_routers(package="app.api", path=API_PATH)
 v1_router = auto_include_routers(package="app.api.v1", path=API_PATH_V1)
