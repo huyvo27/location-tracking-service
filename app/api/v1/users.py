@@ -1,11 +1,10 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_db
-from app.dependencies.auth import get_current_user, login_required, permission_required
+from app.dependencies.auth import login_required, permission_required
+from app.dependencies.db import get_db
 from app.models.user import User
 from app.schemas.response import PaginatedResponse, Response
 from app.schemas.user import (
@@ -92,7 +91,7 @@ async def update_me(
     API Update current User
     """
     updated_user = await user_service.update_me(
-        data=user_data, current_user=current_user
+        user_data=user_data, current_user=current_user
     )
     return Response.success(data=updated_user)
 
@@ -128,7 +127,7 @@ async def update(
     """
     API update User
     """
-    updated_user = await user_service.update(user_uuid=user_uuid, data=user_data)
+    updated_user = await user_service.update(user_uuid=user_uuid, user_data=user_data)
     return Response.success(data=updated_user)
 
 

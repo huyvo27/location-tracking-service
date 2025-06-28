@@ -51,7 +51,7 @@ async def register(user_data: UserRegisterRequest, db: AsyncSession = Depends(ge
     API Register User
     Create a new user and return an access token.
     """
-    new_user = await UserService(db=db).register_user(data=user_data)
+    new_user = await UserService(db=db).register_user(user_data=user_data)
 
     toke_data = {"sub": new_user.uuid_str}
     return Response.success({"access_token": create_access_token(data=toke_data)})

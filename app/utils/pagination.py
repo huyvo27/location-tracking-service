@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any, Generic, Sequence, Type, TypeVar
 
 from pydantic import BaseModel, Field
@@ -40,7 +39,13 @@ async def paginate(
     Returns:
         PaginatedData: Paginated response containing items and metadata.
     Example:
-        paginated_data = await paginate(db=db, stmt=my_stmt, params=PaginationParams(page=1, page_size=10), schema=MySchema)
+        paginated_data = await paginate(
+                                        db=db,
+                                        stmt=my_stmt,
+                                        params=PaginationParams(page=1,
+                                        page_size=10),
+                                        schema=MySchema
+                                    )
     """
 
     total_result = await db.execute(select(func.count()).select_from(stmt.subquery()))

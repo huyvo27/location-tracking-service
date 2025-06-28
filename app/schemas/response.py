@@ -38,7 +38,10 @@ class PaginatedResponse(Response[PaginatedData[T]]):
             id: int
             name: str
 
-        PaginatedResponse[UserSchema].success(data=PaginatedData(items=[user], metadata=metadata))
+        PaginatedResponse[UserSchema].success(
+                                        data=PaginatedData(items=[user],
+                                        metadata=metadata)
+                                        )
     """
 
     pass

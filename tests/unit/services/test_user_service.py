@@ -125,7 +125,7 @@ async def test_update_me(user_service, update_me_data, existing_user):
 async def test_update(user_service, update_data, existing_user):
     old_hashed_password = existing_user.hashed_password
     updated_user = await user_service.update(
-        data=update_data, user_uuid=existing_user.uuid
+        user_data=update_data, user_uuid=existing_user.uuid
     )
 
     assert updated_user.hashed_password != old_hashed_password

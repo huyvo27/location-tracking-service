@@ -21,7 +21,7 @@ async def get_token_data(
     """
     try:
         return decode_access_token(http_authorization_credentials.credentials)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

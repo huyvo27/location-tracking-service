@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_db
 from app.dependencies.auth import login_required
+from app.dependencies.db import get_db
 from app.dependencies.group import (
     membership_required,
     ownership_required,

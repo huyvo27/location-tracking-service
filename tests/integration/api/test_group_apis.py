@@ -4,7 +4,6 @@ from typing import Any, AsyncGenerator
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_access_token, verify_password
@@ -117,7 +116,6 @@ async def test_list_groups(
 
 async def test_get_my_groups(
     async_client: AsyncClient,
-    pg_db: AsyncSession,
     owner_auth_headers: dict,
     existing_group: SimpleNamespace,
 ):
@@ -165,7 +163,6 @@ async def test_get_group_detail(
 
 async def test_create_group(
     async_client: AsyncClient,
-    pg_db: AsyncSession,
     auth_headers: dict,
     group_data: dict,
     existing_group: SimpleNamespace,

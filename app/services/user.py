@@ -37,53 +37,57 @@ class UserService:
 
         return user
 
-    async def create_user(self, data: UserCreateRequest):
+    async def create_user(self, user_data: UserCreateRequest):
         exist_user = await User.find_by(
-            db=self.db, username=data.username, email=data.email, use_or=True
+            db=self.db, username=user_data.username, email=user_data.email, use_or=True
         )
 
         if exist_user:
             raise UsernameEmailAlreadyExists()
 
-        is_active = data.is_active if hasattr(data, "is_active") else True
-        role = data.role if hasattr(data, "role") else UserRole.USER
+        is_active = user_data.is_active if hasattr(user_data, "is_active") else True
+        role = user_data.role if hasattr(user_data, "role") else UserRole.USER
 
         new_user = await User.create(
             db=self.db,
-            username=data.username,
-            phone_number=data.phone_number,
-            full_name=data.full_name,
-            email=data.email,
-            hashed_password=hash_password(data.password),
+            username=user_data.username,
+            phone_number=user_data.phone_number,
+            full_name=user_data.full_name,
+            email=user_data.email,
+            hashed_password=hash_password(user_data.password),
             is_active=is_active,
             role=role.value,
         )
 
         return new_user
 
-    async def register_user(self, data: UserRegisterRequest):
-        return await self.create_user(data)
+    async def register_user(self, user_data: UserRegisterRequest):
+        return await self.create_user(user_data)
 
-    async def update_me(self, data: UserUpdateMeRequest, current_user: User):
+    async def update_me(self, user_data: UserUpdateMeRequest, current_user: User):
         return await current_user.update(
             db=self.db,
-            full_name=data.full_name,
-            phone_number=data.phone_number,
-            email=data.email,
-            hashed_password=hash_password(data.password) if data.password else None,
+            full_name=user_data.full_name,
+            phone_number=user_data.phone_number,
+            email=user_data.email,
+            hashed_password=(
+                hash_password(user_data.password) if user_data.password else None
+            ),
         )
 
-    async def update(self, user_uuid: int, data: UserUpdateRequest):
+    async def update(self, user_uuid: int, user_data: UserUpdateRequest):
         user = await self.get(user_uuid)
 
         return await user.update(
             db=self.db,
-            full_name=data.full_name,
-            phone_number=data.phone_number,
-            email=data.email,
-            hashed_password=hash_password(data.password) if data.password else None,
-            is_active=data.is_active,
-            role=user.role if data.role is None else data.role.value,
+            full_name=user_data.full_name,
+            phone_number=user_data.phone_number,
+            email=user_data.email,
+            hashed_password=(
+                hash_password(user_data.password) if user_data.password else None
+            ),
+            is_active=user_data.is_active,
+            role=user.role if user_data.role is None else user_data.role.value,
         )
 
     async def get(self, user_uuid: str) -> User:

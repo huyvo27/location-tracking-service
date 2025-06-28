@@ -21,7 +21,8 @@ class UserUpdateMeRequest(UserBase):
         None,
         min_length=8,
         max_length=128,
-        description="Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character",
+        description="Password must be at least 8 characters long, contain uppercase, "
+        "lowercase, number, and special character",
     )
 
     @field_validator("password")
@@ -37,7 +38,8 @@ class UserUpdateMeRequest(UserBase):
             or not re.search(r"[@$!%*?&]", v)
         ):
             raise ValueError(
-                "Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character"
+                "Password must be at least 8 characters long, contain uppercase, "
+                "lowercase, number, and special character"
             )
         return v
 
@@ -54,7 +56,8 @@ class UserRegisterRequest(UserUpdateMeRequest):
         ...,
         min_length=8,
         max_length=128,
-        description="Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character",
+        description="Password must be at least 8 characters long, contain uppercase, "
+        "lowercase, number, and special character",
     )
     email: EmailStr
 

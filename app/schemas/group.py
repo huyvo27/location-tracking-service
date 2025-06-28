@@ -49,7 +49,8 @@ class MyGroupListRequest(GroupListRequest):
 
     only_owned: Optional[bool] = Field(
         False,
-        description="If true, only groups owned by the user are returned. Defaults to false.",
+        description="If true, only groups owned by the user are returned. "
+        "Defaults to false.",
     )
 
 
@@ -64,7 +65,8 @@ class GroupUpdateRequest(BaseSchema):
         None,
         min_length=8,
         max_length=128,
-        description="New secret key for the group (optional, if not provided, the existing key remains unchanged)",
+        description="New secret key for the group (optional, if not provided, "
+        "the existing key remains unchanged)",
     )
     description: Optional[str] = Field(
         None, max_length=255, description="Group description"

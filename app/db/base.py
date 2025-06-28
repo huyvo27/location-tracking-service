@@ -96,7 +96,12 @@ class CRUDMixin:
         Returns:
             Optional[T]: Found record or None.
         Example:
-            await Model.find_by(db=db, username="john", email="join@example.com", use_or=True)
+            await Model.find_by(
+                                db=db,
+                                username="john",
+                                email="join@example.com",
+                                use_or=True
+                            )
         """
         stmt = select(cls)
         filters = []
@@ -136,7 +141,13 @@ class CRUDMixin:
         Returns:
             List[T] or SQLAlchemy statement: List of records or SQLAlchemy statement.
         Example:
-            await Model.all(db=db, limit=10, offset=0, order_by=Model.created_at, order_desc=True)
+            await Model.all(
+                            db=db,
+                            limit=10,
+                            offset=0,
+                            order_by=Model.created_at,
+                            order_desc=True
+                        )
         """
         stmt = select(cls)
 
@@ -174,12 +185,17 @@ class CRUDMixin:
             case_insensitive (bool): Whether to perform case-insensitive search.
             as_stmt (bool): If True, return SQLAlchemy statement instead of results.
             **kwargs: Additional filter criteria.\n
-                {attribute_name}__in (list): Filter by a list of values for the attribute.\n
+                {attribute_name}__in (list): Filter by a list of values
+                for the attribute.\n
                 attribute_name (any): Filter by exact match for the attribute.
         Returns:
             List[T] or SQLAlchemy statement: Filtered records or SQLAlchemy statement.
         Example:
-           await Model.filter_by(db=db, department__in=["HR", "IT"], contains={"name": "john"})
+            await Model.filter_by(
+                                    db=db,
+                                    department__in=["HR", "IT"],
+                                    contains={"name": "john"}
+                                )
         """
         stmt = select(cls)
         filters = []

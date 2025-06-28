@@ -5,8 +5,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.base import ORMBase
-from app.models.group import Group
-from app.models.membership import Membership
+from app.models.group import Group  # noqa: F401
+from app.models.membership import Membership  # noqa: F401
 from app.utils.enums import UserRole
 
 

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.security import hash_password
-from app.db import AsyncSessionLocal
+from app.db.session import AsyncSessionLocal
 from app.models.user import User
 from app.utils.enums import UserRole
 

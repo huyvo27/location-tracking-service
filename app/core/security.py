@@ -23,8 +23,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token with an expiration time.
-    If expires_delta is not provided, it defaults to the configured access token expiration time.
+    """
+    Create a JWT access token with an expiration time.
+    If expires_delta is not provided,
+    it defaults to the configured access token expiration time.
     Args:
         data (dict): Data to encode in the token.
         expires_delta (Optional[timedelta]): Optional expiration time for the token.

@@ -8,7 +8,8 @@ from app.config import settings
 from app.core.exception_handlers import register_exception_handlers
 from app.core.router import v1_router
 from app.custom_docs import configure_docs
-from app.db import Base, engine
+from app.db.base import Base
+from app.db.session import engine
 from app.initialization import setup_system_admin
 
 
