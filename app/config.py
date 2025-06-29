@@ -1,32 +1,41 @@
 import os
 from pathlib import Path
+from typing import List, Union
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).parent.parent
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = os.getenv("APP_NAME", "LOCAL TRACKER")
-    APP_VERSION: str = os.getenv("APP_VERSION", "1.0.0")
-    APP_DESCRIPTION: str = os.getenv("APP_DESCRIPTION", "LOCAL TRACKER API")
-    APP_URL: str = os.getenv("APP_URL", "http://localhost:8000")
-    APP_DOCS_URL: str = os.getenv("APP_DOCS_URL", "/docs")
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+    APP_NAME: str = "LOCAL TRACKER"
+    APP_VERSION: str = "1.0.0"
+    APP_DESCRIPTION: str = "LOCAL TRACKER API"
+    APP_URL: str = "http://localhost:8000"
+    APP_DOCS_URL: str = "/docs"
+    SECRET_KEY: str = ""
     API_PREFIX: str = ""
-    BACKEND_CORS_ORIGINS: list = ["*"]
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
-    DATABASE_HOST: str = os.getenv("DATABASE_HOST", "")
-    DATABASE_PORT: str = os.getenv("DATABASE_PORT", "")
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
-    ACCESS_TOKEN_EXPIRE_SECONDS: int = os.getenv(
-        "ACCESS_TOKEN_EXPIRE_SECONDS", 60 * 60 * 24 * 3
-    )
+    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    DATABASE_URL: str = ""
+    DATABASE_HOST: str = ""
+    DATABASE_PORT: str = ""
+    DB_DEBUG: bool = False
+    ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 3
     SECURITY_ALGORITHM: str = "HS256"
-    LOGGING_CONFIG_FILE: str = os.path.join(BASE_DIR, "logging.ini")
-    DEFAULT_ADMIN_USERNAME: str = os.getenv("DEFAULT_ADMIN_USERNAME", "sys_admin")
-    DEFAULT_ADMIN_EMAIL: str = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@example.com")
-    DEFAULT_ADMIN_PASSWORD: str = os.getenv("DEFAULT_ADMIN_PASSWORD", "sys_admin")
+    LOGGING_CONFIG_FILE: str = str(BASE_DIR / "logging.ini")
+    DEFAULT_ADMIN_USERNAME: str = "sys_admin"
+    DEFAULT_ADMIN_EMAIL: str = "admin@example.com"
+    DEFAULT_ADMIN_PASSWORD: str = "sys_admin"
+    REDIS_URLs: Union[str, List[str]] = []
+    REDIS_MAX_CONNECTIONS: int = 100
+
+    @field_validator("REDIS_URLs", mode="before")
+    @classmethod
+    def parse_redis_urls(cls, v):
+        if isinstance(v, str):
+            return [url.strip() for url in v.split(",") if url.strip()]
+        return v
 
     class Config:
         env_file = ".env" if os.getenv("USE_DOTENV", "true").lower() == "true" else None

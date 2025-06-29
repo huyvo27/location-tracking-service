@@ -1,15 +1,14 @@
+import asyncio
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.logger import logger
 from app.core.security import hash_password
 from app.db.session import AsyncSessionLocal
 from app.models.user import User
 from app.utils.enums import UserRole
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 async def create_admin_user(db: AsyncSession):

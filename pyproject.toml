@@ -58,6 +58,8 @@ urllib3 = "2.4.0"
 uuid = "1.30"
 uvicorn = "0.34.2"
 zipp = "3.21.0"
+redis = "^6.2.0"
+mmh3 = "^5.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
