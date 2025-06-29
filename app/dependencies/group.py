@@ -26,7 +26,7 @@ async def valid_user(user: User = Depends(login_required)) -> User:
     return user
 
 
-async def valid_group(group_uuid: UUID, db: AsyncSession = Depends(get_db)) -> Group:
+async def valid_group(group_uuid: str, db: AsyncSession = Depends(get_db)) -> Group:
     """
     Dependency to validate if the group exists.
     """

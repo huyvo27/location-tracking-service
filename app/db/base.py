@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Callable, Optional, Type, TypeVar
 
 import inflect
-from sqlalchemy import Column, DateTime, Integer, or_, select
+from sqlalchemy import Column, DateTime, Integer, String, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, as_declarative, declared_attr
 
@@ -38,6 +38,9 @@ class Base:
     def __tablename__(cls) -> str:
         return p.plural(cls.__name__.lower())
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__}(id={self.id})>"
+
     __mapper_args__ = {"confirm_deleted_rows": False}
 
 
@@ -68,10 +71,29 @@ class CRUDMixin:
 
     @classmethod
     @with_async_db_session
+    async def initialize(
+        cls: Type[T], db: Optional[AsyncSession] = None, **kwargs
+    ) -> T:
+        """Initialize a new record in the database without committing the transaction.
+        Args:
+            db (AsyncSession): Database session.
+            **kwargs: Fields to set on the new record as keyword arguments.
+        Returns:
+            T: Initialized instance of the model.
+        Example:
+            await Model.initialize(db=db, name="John Doe", age=30)
+        """
+        instance = cls(**kwargs)
+        db.add(instance)
+        await db.flush()
+        return instance
+
+    @classmethod
+    @with_async_db_session
     async def find(
         cls: Type[T], _id: int, db: Optional[AsyncSession] = None
     ) -> Optional[T]:
-        """Find a record by its primary key.
+        """Find a record by its primary key ID.
         Args:
             _id (int): Primary key of the record.
             db (AsyncSession): Database session.
@@ -214,6 +236,8 @@ class CRUDMixin:
             for key, value in contains.items():
                 cls._field_validation(key)
                 column = getattr(cls, key)
+                if not isinstance(column.type, String):
+                    continue
                 if case_insensitive:
                     filters.append(column.ilike(f"%{value}%"))
                 else:
