@@ -22,7 +22,6 @@ from app.schemas.group import (
     GroupListRequest,
     GroupUpdateLocationRequest,
     GroupUpdateRequest,
-    KickMemberRequest,
     MembershipResponse,
     MyGroupListRequest,
     SimpleGroupResponse,
@@ -231,24 +230,25 @@ async def leave_group(
     },
 )
 async def kick_user(
-    params: KickMemberRequest = Depends(),
+    group_uuid: str,
+    member_uuid: str,
     group: Group = Depends(valid_group),
     group_service: GroupService = Depends(get_group_service),
-    redis: Redis = Depends(get_redis),
+    redis: Redis = Depends(get_redis)
 ) -> Response[None]:
     """
     API Kick User from Group
     """
     try:
         group_cache_service = GroupCacheService(
-            redis=redis, db=None, group_uuid=str(group.uuid)
+            redis=redis, db=None, group_uuid=group_uuid
         )
-        await group_cache_service.remove_member(user_uuid=str(params.member_uuid))
+        await group_cache_service.remove_member(user_uuid=member_uuid)
     except Exception as e:
         logger.error(f"Failed to remove member from cache: {e}")
         raise
 
-    await group_service.kick_member(group=group, member_uuid=params.member_uuid)
+    await group_service.kick_member(group=group, member_uuid=member_uuid)
     return Response.success(data=None)
 
 

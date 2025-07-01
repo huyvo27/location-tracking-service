@@ -54,12 +54,6 @@ class MyGroupListRequest(GroupListRequest):
     )
 
 
-class KickMemberRequest(BaseSchema):
-    member_uuid: UUID = Field(
-        ..., description="UUID of the user to be kicked from the group"
-    )
-
-
 class GroupUpdateRequest(BaseSchema):
     key: Optional[str] = Field(
         None,

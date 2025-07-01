@@ -9,7 +9,6 @@ from app.schemas.group import (
     GroupJoinRequest,
     GroupUpdateLocationRequest,
     GroupUpdateRequest,
-    KickMemberRequest,
     MemberResponse,
     MembershipResponse,
     SimpleGroupResponse,
@@ -64,12 +63,6 @@ def test_group_update_location_request_valid(now):
     assert req.longitude == 100.0
     assert req.latitude == 10.0
     assert req.timestamp == int(now.timestamp())
-
-
-def test_kick_member_request():
-    uuid = uuid4()
-    req = KickMemberRequest(member_uuid=uuid)
-    assert req.member_uuid == uuid
 
 
 def test_group_update_request_defaults():
