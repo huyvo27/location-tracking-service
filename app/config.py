@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_PASSWORD: str = "sys_admin"
     REDIS_URLs: Union[str, List[str]] = []
     REDIS_MAX_CONNECTIONS: int = 100
+    GROUP_LOCATION_TTL: int = 600
 
     @field_validator("REDIS_URLs", mode="before")
     @classmethod

@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from redis.asyncio import ConnectionError as RedisConnectionError
 
 from app.dependencies.db import get_redis
+from app.exceptions import NoAvailableRedisServers
 
 
 @pytest.mark.asyncio
@@ -83,10 +84,10 @@ async def test_get_redis_all_fail(monkeypatch):
     )
 
     with patch("app.dependencies.db.get_server_index", return_value=0):
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NoAvailableRedisServers) as exc_info:
             await get_redis(str(uuid.uuid4()))
 
     assert exc_info.value.status_code == 503
-    assert "No available Redis servers" in str(exc_info.value.detail)
+    assert "No available Redis servers." in str(exc_info.value.message)
     assert redis1.ping.await_count == 1
     assert redis2.ping.await_count == 1

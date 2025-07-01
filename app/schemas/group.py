@@ -79,7 +79,14 @@ class GroupUpdateLocationRequest(BaseSchema):
         ..., ge=-180.0, le=180.0, description="Longitude in degrees"
     )
     latitude: float = Field(..., ge=-90.0, le=90.0, description="Latitude in degrees")
-    timestamp: datetime = Field(..., description="Timestamp in ISO 8601 format")
+    timestamp: float = Field(
+        ..., description="Unix timestamp (seconds since epoch, UTC)"
+    )
+    nickname: Optional[str] = Field(
+        None,
+        max_length=64,
+        description="A nickname to help track the user more easily.",
+    )
 
 
 class SimpleGroupResponse(BaseSchema):
@@ -133,3 +140,11 @@ class MembershipResponse(BaseSchema):
     user_uuid: UUID
     group_uuid: UUID
     joined_at: datetime
+
+
+class UserLocation(BaseSchema):
+    user_uuid: str
+    nickname: str
+    latitude: float
+    longitude: float
+    timestamp: float

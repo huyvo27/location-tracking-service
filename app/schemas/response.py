@@ -30,6 +30,10 @@ class Response(BaseSchema, Generic[T]):
     def error(cls, code: str, message: str):
         return cls(code=code, message=message)
 
+    @classmethod
+    def accepted(cls):
+        return cls(code="000", message="Accepted")
+
 
 class PaginatedResponse(Response[PaginatedData[T]]):
     """

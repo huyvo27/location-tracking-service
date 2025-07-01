@@ -15,8 +15,8 @@ class Membership(Base, CRUDMixin):
     )
     joined_at = Column(DateTime, default=datetime.now(timezone.utc))
 
-    user = relationship("User", back_populates="memberships", lazy="selectin")
-    group = relationship("Group", back_populates="memberships", lazy="selectin")
+    user = relationship("User", back_populates="memberships")
+    group = relationship("Group", back_populates="memberships")
 
     @property
     def user_uuid(self):

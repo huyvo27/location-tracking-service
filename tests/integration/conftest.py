@@ -8,9 +8,11 @@ from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from testcontainers.postgres import PostgresContainer
+from testcontainers.redis import RedisContainer
 
 from tests.utils import generate_strong_password, random_lower_string
 
+NUMBER_OF_REDIS_SERVER = 2
 
 @pytest.fixture(scope="session")
 def postgres_url():
@@ -22,6 +24,29 @@ def postgres_url():
 
 
 @pytest.fixture(scope="session")
+def redis_urls():
+    urls = []
+    containers = []
+
+    try:
+        for _ in range(NUMBER_OF_REDIS_SERVER):
+            container = RedisContainer("redis:8.0.2")
+            container.start()
+            containers.append(container)
+
+            host = container.get_container_host_ip()
+            port = container.get_exposed_port(6379)
+            urls.append(f"redis://{host}:{port}")
+
+        yield urls
+    except Exception as e:
+        pytest.fail(f"Failed to start Redis containers: {e}")
+    finally:
+        for container in containers:
+            container.stop()
+
+
+@pytest.fixture(scope="session")
 def default_admin():
     return {
         "username": f"admin-{random_lower_string(8)}",
@@ -29,12 +54,13 @@ def default_admin():
     }
 
 
-@pytest.fixture(scope="session", autouse=True)
-def override_settings(postgres_url: str, default_admin: dict):
+@pytest.fixture(autouse=True)
+def override_settings(postgres_url: str, redis_urls: str, default_admin: dict):
     with mock.patch.dict(
         "os.environ",
         {
             "DATABASE_URL": postgres_url,
+            "REDIS_URLs": ",".join(redis_urls),
             "DEFAULT_ADMIN_USERNAME": default_admin["username"],
             "DEFAULT_ADMIN_PASSWORD": default_admin["password"],
         },

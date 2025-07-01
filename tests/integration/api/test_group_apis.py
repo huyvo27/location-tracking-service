@@ -1,3 +1,4 @@
+from datetime import datetime, time, timezone
 from types import SimpleNamespace
 from typing import Any, AsyncGenerator
 
@@ -67,6 +68,16 @@ def group_data() -> dict:
         "name": random_lower_string(length=10),
         "key": generate_strong_password(8),
         "description": "Group description",
+    }
+
+
+@pytest.fixture
+def location_data() -> dict:
+    return {
+        "latitude": 10.1234,
+        "longitude": 106.5678,
+        "timestamp": datetime.now(timezone.utc).timestamp(),
+        "nickname": random_lower_string(),
     }
 
 
@@ -163,6 +174,7 @@ async def test_get_group_detail(
 
 async def test_create_group(
     async_client: AsyncClient,
+    owner_auth_headers: dict,
     auth_headers: dict,
     group_data: dict,
     existing_group: SimpleNamespace,
@@ -171,11 +183,23 @@ async def test_create_group(
     assert group_data["name"] == existing_group.name
 
     # Verify in database
+    from app.dependencies.db import get_redis
     from app.models.group import Group
+    from app.services.group_cache import GroupCacheService
 
     group = await Group.find_by(name=group_data["name"])
+    group_uuid = str(group.uuid)
+    gc = GroupCacheService(
+        redis=await get_redis(group_uuid=group_uuid), db=None, group_uuid=group_uuid
+    )
+    # Get users info
+    token_data = decode_access_token(owner_auth_headers["Authorization"].split()[1])
+    user_uuid = token_data.sub
+
     assert group is not None
-    assert str(group.uuid) == existing_group.uuid
+    assert group_uuid == existing_group.uuid
+    assert await gc.is_exists()
+    assert await gc.is_member(user_uuid)
 
     # Try creating duplicate group name
     resp = await async_client.post(
@@ -191,10 +215,6 @@ async def test_create_group(
 async def test_join_group(
     async_client: AsyncClient, auth_headers: dict, existing_group: SimpleNamespace
 ):
-    # Get user info
-    token_data = decode_access_token(auth_headers["Authorization"].split()[1])
-    user_uuid = token_data.sub
-
     # Join group
     join_data = {"key": existing_group.key}
     resp = await async_client.post(
@@ -204,9 +224,24 @@ async def test_join_group(
     )
     data = resp.json()["data"]
 
+    # Get user info
+    token_data = decode_access_token(auth_headers["Authorization"].split()[1])
+    user_uuid = token_data.sub
+    # init group_cache_service
+    from app.dependencies.db import get_redis
+    from app.services.group_cache import GroupCacheService
+
+    gc = GroupCacheService(
+        redis=await get_redis(group_uuid=existing_group.uuid),
+        db=None,
+        group_uuid=existing_group.uuid,
+    )
+
     assert resp.status_code == 200
     assert data["group_uuid"] == existing_group.uuid
     assert data["user_uuid"] == user_uuid
+    assert await gc.is_exists()
+    assert await gc.is_member(user_uuid)
 
     # Try joining again (should fail)
     resp = await async_client.post(
@@ -240,12 +275,23 @@ async def test_delete_group(
     )
     assert resp.status_code == 403
 
+    # init group_cache_service
+    from app.dependencies.db import get_redis
+    from app.services.group_cache import GroupCacheService
+
+    gc = GroupCacheService(
+        redis=await get_redis(group_uuid=existing_group.uuid),
+        db=None,
+        group_uuid=existing_group.uuid,
+    )
+
     # Delete group as owner
     resp = await async_client.delete(
         f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}", headers=owner_auth_headers
     )
     assert resp.status_code == 200
     assert resp.json()["data"] is None
+    assert not await gc.is_exists()
 
     # Verify group is deleted
     from app.models.group import Group
@@ -270,7 +316,23 @@ async def test_leave_group(
     resp = await async_client.delete(
         f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/leave", headers=auth_headers
     )
+
+    # init group_cache_service
+    from app.dependencies.db import get_redis
+    from app.services.group_cache import GroupCacheService
+
+    gc = GroupCacheService(
+        redis=await get_redis(group_uuid=existing_group.uuid),
+        db=None,
+        group_uuid=existing_group.uuid,
+    )
+    # Get user info
+    token_data = decode_access_token(auth_headers["Authorization"].split()[1])
+    user_uuid = token_data.sub
+
     assert resp.status_code == 200
+    assert await gc.is_exists()
+    assert not await gc.is_member(user_uuid)
 
     # Try leaving again (should fail)
     resp = await async_client.delete(
@@ -324,8 +386,20 @@ async def test_kick_user(
         f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/kick/{user_uuid}",
         headers=owner_auth_headers,
     )
+    # init group_cache_service
+    from app.dependencies.db import get_redis
+    from app.services.group_cache import GroupCacheService
+
+    gc = GroupCacheService(
+        redis=await get_redis(group_uuid=existing_group.uuid),
+        db=None,
+        group_uuid=existing_group.uuid,
+    )
+
     assert resp.status_code == 200
     assert resp.json()["data"] is None
+    assert await gc.is_exists()
+    assert not await gc.is_member(user_uuid)
 
     #  Kick user as owner again
     resp = await async_client.delete(
@@ -375,3 +449,74 @@ async def test_update_group(
         f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/update", json=update_data
     )
     assert resp.status_code == 401
+
+
+async def test_update_location(
+    async_client: AsyncClient,
+    auth_headers: dict,
+    existing_group: SimpleNamespace,
+    location_data: dict,
+):
+    join_data = {"key": existing_group.key}
+    resp = await async_client.post(
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join",
+        json=join_data,
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200
+
+    # Update location
+    token_data = decode_access_token(auth_headers["Authorization"].split()[1])
+    user_uuid = token_data.sub
+
+    resp = await async_client.put(
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/locations",
+        json=location_data,
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["data"] is None
+
+
+async def test_get_group_locations(
+    async_client: AsyncClient,
+    auth_headers: dict,
+    owner_auth_headers: dict,
+    existing_group: SimpleNamespace,
+    location_data: dict,
+):
+    # First join the group
+    join_data = {"key": existing_group.key}
+    resp = await async_client.post(
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join",
+        json=join_data,
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200
+
+    # Update location first
+    token_data = decode_access_token(auth_headers["Authorization"].split()[1])
+    user_uuid = token_data.sub
+
+    await async_client.put(
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/locations",
+        json=location_data,
+        headers=auth_headers,
+    )
+
+    # Get group locations
+    resp = await async_client.get(
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/locations",
+        headers=owner_auth_headers,
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert isinstance(data, dict)
+    items = data["items"]
+    assert isinstance(items, list)
+    assert any(loc["user_uuid"] == user_uuid for loc in items)
+    assert any(loc["nickname"] == location_data["nickname"] for loc in items)
+    assert any(loc["latitude"] == location_data["latitude"] for loc in items)
+    assert any(loc["longitude"] == location_data["longitude"] for loc in items)
+    assert any(loc["timestamp"] == location_data["timestamp"] for loc in items)

@@ -1,9 +1,8 @@
-from uuid import UUID
-
 from fastapi import Depends
+from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies.db import get_db
+from app.dependencies.db import get_db, get_redis
 from app.exceptions import (
     GroupNotFound,
     UserAlreadyMemberOfGroup,
@@ -13,8 +12,10 @@ from app.exceptions import (
 from app.models.group import Group
 from app.models.membership import Membership
 from app.models.user import User
+from app.schemas.token import TokenData
+from app.services.group_cache import GroupCacheService
 
-from .auth import login_required
+from .auth import get_token_data, login_required
 
 
 async def valid_user(user: User = Depends(login_required)) -> User:
@@ -60,3 +61,32 @@ async def ownership_required(
     if group.owner_id != user.id:
         raise UserNotOwnerOfGroup()
     return group
+
+
+async def ensure_user_is_member_of_group(
+    group_uuid: str,
+    token_data: TokenData = Depends(get_token_data),
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> GroupCacheService | None:
+    group_cache = GroupCacheService(redis, db, group_uuid)
+    user_uuid = token_data.sub
+
+    if not await group_cache.is_exists():
+        group = await Group.find_by(
+            db=db, uuid=group_uuid
+        )
+        if not group: 
+            raise GroupNotFound()
+        
+        user = await User.find_by(db=db, uuid=user_uuid)
+        
+        is_member = Membership.find_by(db, group_id=group.id, user_id=user.id)
+        if not is_member:
+            raise UserNotMemberOfGroup()
+        await group_cache.sync_group()
+    else:
+        if not await group_cache.is_member(user_uuid):
+            raise UserNotMemberOfGroup()
+
+    return group_cache

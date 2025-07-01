@@ -1,4 +1,4 @@
-from typing import Any, Generic, Sequence, Type, TypeVar
+from typing import Any, Generic, List, Sequence, Type, TypeVar
 
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
@@ -63,6 +63,29 @@ async def paginate(
         page_size=params.page_size,
         total_items=total,
         total_pages=(total + params.page_size - 1) // params.page_size,
+    )
+
+    return PaginatedData[schema](items=items, metadata=metadata)
+
+
+def paginate_without_stmt(
+    items: List,
+    schema: Type[BaseModel],
+) -> PaginatedData:
+    """Paginate the results.
+    Args:
+        items (List): items.
+        schema (Type[BaseModel]): Pydantic schema for the response items.
+    Returns:
+        PaginatedData: Paginated response containing items and metadata.
+    Example:
+        paginated_data = paginate(
+                                    items=items
+                                    schema=MySchema
+                                )
+    """
+    metadata = Metadata(
+        page=1, page_size=len(items), total_items=len(items), total_pages=1
     )
 
     return PaginatedData[schema](items=items, metadata=metadata)

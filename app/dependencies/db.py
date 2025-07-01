@@ -10,6 +10,7 @@ from app.config import settings
 from app.core.logger import logger
 from app.db.redis import redis_clients
 from app.db.session import AsyncSessionLocal
+from app.exceptions import NoAvailableRedisServers
 from app.utils.consistent_hash import get_server_index
 
 
@@ -18,7 +19,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_redis(_uuid: str) -> Redis:
+async def get_redis(group_uuid: str) -> Redis:
     """
     Dependency to get a Redis client for a given UUID using consistent hashing.
     Tries fallback servers if the primary server is unavailable.
@@ -37,13 +38,13 @@ async def get_redis(_uuid: str) -> Redis:
         raise HTTPException(status_code=503, detail="No Redis servers available")
 
     try:
-        uuid.UUID(_uuid)
+        uuid.UUID(group_uuid)
     except ValueError:
-        logger.error(f"Invalid UUID format: {_uuid}")
+        logger.error(f"Invalid UUID format: {group_uuid}")
         raise HTTPException(status_code=400, detail="Invalid UUID format")
 
     num_servers = len(redis_clients)
-    server_idx = get_server_index(_uuid, num_servers)
+    server_idx = get_server_index(group_uuid, num_servers)
     attempts = 0
 
     while attempts < num_servers:
@@ -54,12 +55,12 @@ async def get_redis(_uuid: str) -> Redis:
         except (RedisConnectionError, TimeoutError) as e:
             logger.warning(
                 f"Failed to connect to Redis server {settings.REDIS_URLs[server_idx]} "
-                f"for UUID {_uuid}: {str(e)}"
+                f"for UUID {group_uuid}: {str(e)}"
             )
             server_idx = (server_idx + 1) % num_servers
             attempts += 1
 
     logger.error(
-        f"No available Redis servers for UUID {_uuid} after {attempts} attempts"
+        f"No available Redis servers for UUID {group_uuid} after {attempts} attempts"
     )
-    raise HTTPException(status_code=503, detail="No available Redis servers")
+    raise NoAvailableRedisServers()

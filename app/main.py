@@ -9,6 +9,7 @@ from app.core.exception_handlers import register_exception_handlers
 from app.core.router import base_router, v1_router
 from app.custom_docs import configure_docs
 from app.db.base import Base
+from app.db.redis import close_redis_clients
 from app.db.session import engine
 from app.initialization import setup_system_admin
 
@@ -20,6 +21,8 @@ async def lifespan(app: FastAPI):
 
     await setup_system_admin()
     yield
+
+    await close_redis_clients()
 
 
 def get_app() -> FastAPI:

@@ -297,6 +297,22 @@ class CRUDMixin:
         await db.delete(self)
         await db.commit()
 
+    @classmethod
+    @with_async_db_session
+    async def exists(cls, db: Optional[AsyncSession] = None, **kwargs) -> bool:
+        """
+        Check if a record exists based on the given criteria.
+
+        Args:
+            db (AsyncSession): Optional DB session.
+            **kwargs: Filter criteria.
+
+        Returns:
+            bool: True if at least one record exists, False otherwise.
+        """
+        result = await cls.find_by(db=db, **kwargs)
+        return result is not None
+
 
 class ORMBase(Base, CRUDMixin):
     __abstract__ = True

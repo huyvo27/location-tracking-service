@@ -59,11 +59,11 @@ def test_group_update_location_request_valid(now):
     req = GroupUpdateLocationRequest(
         longitude=100.0,
         latitude=10.0,
-        timestamp=now,
+        timestamp=int(now.timestamp()),
     )
     assert req.longitude == 100.0
     assert req.latitude == 10.0
-    assert req.timestamp == now
+    assert req.timestamp == int(now.timestamp())
 
 
 def test_kick_member_request():
