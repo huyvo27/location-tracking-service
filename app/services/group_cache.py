@@ -23,13 +23,47 @@ class GroupCacheService:
         return f"location:{self.group_uuid}"
 
     async def add_member(self, user_uuid: str) -> None:
-        await self.redis.sadd(self.group_member_key, user_uuid)
+        lua_script = """
+        local key = KEYS[1]
+        local member = ARGV[1]
+        local ttl = tonumber(ARGV[2])
+
+        redis.call("SADD", key, member)
+        redis.call("EXPIRE", key, ttl)
+        return 1
+        """
+        await self.redis.eval(
+            lua_script,
+            1,
+            self.group_member_key,
+            user_uuid,
+            str(settings.GROUP_LOCATION_TTL),
+        )
 
     async def sync_group(self) -> None:
         memberships = await Membership.filter_by(db=self.db, group_uuid=self.group_uuid)
         members = [m.user_uuid for m in memberships]
-        if members:
-            await self.redis.sadd(self.group_member_key, *set(members))
+        if not members:
+            return
+
+        lua_script = """
+        local key = KEYS[1]
+        local ttl = tonumber(ARGV[1])
+        for i = 2, #ARGV do
+            redis.call("SADD", key, ARGV[i])
+        end
+        redis.call("EXPIRE", key, ttl)
+        return 1
+        """
+        args = [str(settings.GROUP_LOCATION_TTL)] + [str(m) for m in set(members)]
+
+        await self.redis.eval(
+            lua_script,
+            1,
+            self.group_member_key,
+            *args,
+        )
+
 
     async def is_member(self, user_uuid: str) -> bool:
         return await self.redis.sismember(self.group_member_key, user_uuid)
@@ -50,13 +84,14 @@ class GroupCacheService:
         self, user_uuid: str, location_data: GroupUpdateLocationRequest
     ):
         lua_script = """
-                local key = KEYS[1]
+                local location_key = KEYS[1]
+                local member_key = KEYS[2]
                 local field = ARGV[1]
                 local payload = ARGV[2]
                 local new_ts = tonumber(ARGV[3])
                 local ttl = tonumber(ARGV[4])
 
-                local current = redis.call("HGET", key, field)
+                local current = redis.call("HGET", location_key, field)
                 if current then
                 local current_data = cjson.decode(current)
                 local current_ts = tonumber(current_data["timestamp"])
@@ -65,15 +100,16 @@ class GroupCacheService:
                 end
                 end
 
-                redis.call("HSET", key, field, payload)
-                redis.call("EXPIRE", key, ttl)
+                redis.call("HSET", location_key, field, payload)
+                redis.call("EXPIRE", location_key, ttl)
+                redis.call("EXPIRE", member_key, ttl)
                 return 1
             """
-        await self.redis.expire(self.group_location_key, 3600)
         await self.redis.eval(
             lua_script,
-            1,
+            2,
             self.group_location_key,
+            self.group_member_key,
             user_uuid,
             json.dumps(location_data.serializable_dict()),
             str(location_data.timestamp),
