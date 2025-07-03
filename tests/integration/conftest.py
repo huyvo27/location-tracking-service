@@ -14,6 +14,7 @@ from tests.utils import generate_strong_password, random_lower_string
 
 NUMBER_OF_REDIS_SERVER = 2
 
+
 @pytest.fixture(scope="session")
 def postgres_url():
     try:
@@ -60,7 +61,7 @@ def override_settings(postgres_url: str, redis_urls: str, default_admin: dict):
         "os.environ",
         {
             "DATABASE_URL": postgres_url,
-            "REDIS_URLs": ",".join(redis_urls),
+            "REDIS_URLS": ",".join(redis_urls),
             "DEFAULT_ADMIN_USERNAME": default_admin["username"],
             "DEFAULT_ADMIN_PASSWORD": default_admin["password"],
         },

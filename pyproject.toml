@@ -60,6 +60,10 @@ uvicorn = "0.34.2"
 zipp = "3.21.0"
 redis = "^6.2.0"
 mmh3 = "^5.1.0"
+websockets = "^15.0.1"
+
+[tool.poetry.group.dev]
+optional = true
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -70,11 +74,21 @@ isort = "^5.13.0"
 aiosqlite = "^0.21.0"
 asgi-lifespan = "^2.1.0"
 
+[tool.poetry.group.test]
+optional = true
+
 [tool.poetry.group.test.dependencies]
 pytest = "^8.0.0"
 pytest-asyncio = "^0.23.0"
 aiosqlite = "^0.21.0"
 asgi-lifespan = "^2.1.0"
+
+[tool.poetry.group.alembic]
+optional = true
+
+[tool.poetry.group.alembic.dependencies]
+alembic = "^1.16.2"
+
 
 [tool.black]
 line-length = 88

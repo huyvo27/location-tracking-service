@@ -38,7 +38,7 @@ async def test_get_redis_success(monkeypatch):
 
     monkeypatch.setattr("app.dependencies.db.redis_clients", [mock_redis])
     monkeypatch.setattr(
-        "app.dependencies.db.settings", MagicMock(REDIS_URLs=["redis://localhost"])
+        "app.dependencies.db.settings", MagicMock(REDIS_URLS=["redis://localhost"])
     )
 
     client = await get_redis(str(uuid.uuid4()))
@@ -58,7 +58,7 @@ async def test_get_redis_fallback_success(monkeypatch):
         "app.dependencies.db.redis_clients", [failing_redis, working_redis]
     )
     monkeypatch.setattr(
-        "app.dependencies.db.settings", MagicMock(REDIS_URLs=["url1", "url2"])
+        "app.dependencies.db.settings", MagicMock(REDIS_URLS=["url1", "url2"])
     )
 
     # Patch get_server_index to force starting at index 0
@@ -80,7 +80,7 @@ async def test_get_redis_all_fail(monkeypatch):
 
     monkeypatch.setattr("app.dependencies.db.redis_clients", [redis1, redis2])
     monkeypatch.setattr(
-        "app.dependencies.db.settings", MagicMock(REDIS_URLs=["url1", "url2"])
+        "app.dependencies.db.settings", MagicMock(REDIS_URLS=["url1", "url2"])
     )
 
     with patch("app.dependencies.db.get_server_index", return_value=0):

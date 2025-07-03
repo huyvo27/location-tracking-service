@@ -10,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # restart: unless-stopped
 
   redis1:
     image: redis:8.0.2
@@ -22,6 +23,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    # restart: unless-stopped
 
   redis2:
     image: redis:8.0.2
@@ -34,18 +36,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    # restart: unless-stopped
 
   alembic:
-    image: python:3.12.11-slim
+    build:
+      context: .
+      dockerfile: alembic/Dockerfile
     container_name: alembic
     working_dir: /app
-    volumes:
-      - ./alembic:/app
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql+psycopg://fastapi_user:fastapi123@db:5432/app_db
     depends_on:
       - db
-    entrypoint: ["sh", "-c", "while ! nc -z db 5432; do sleep 1; done; alembic upgrade head"]
+    command: ["upgrade", "head"]
 
   app:
     build:
@@ -56,7 +61,7 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql+psycopg://fastapi_user:fastapi123@db/app_db
-      REDIS_URLs: redis://:locaTracer123@redis1:6379/0,redis://:locaTracer123@redis2:6379/0
+      REDIS_URLS: redis://:locaTracer123@redis1:6379/0,redis://:locaTracer123@redis2:6379/0
     ports:
       - "8000:8000"
     depends_on:
@@ -64,11 +69,6 @@ services:
       - redis1
       - redis2
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/healthcheck || exit 1"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-
+    restart: unless-stopped
 volumes:
   postgres_data:
