@@ -5,7 +5,7 @@ from app.core.logger import logger
 
 pools = [
     ConnectionPool.from_url(url=url, max_connections=settings.REDIS_MAX_CONNECTIONS)
-    for url in settings.REDIS_URLs
+    for url in settings.REDIS_URLS
 ]
 
 redis_clients = [Redis(connection_pool=pool, decode_responses=True) for pool in pools]

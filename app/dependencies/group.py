@@ -73,17 +73,16 @@ async def ensure_user_is_member_of_group(
     user_uuid = token_data.sub
 
     if not await group_cache.is_exists():
-        group = await Group.find_by(
-            db=db, uuid=group_uuid
-        )
-        if not group: 
+        group = await Group.find_by(db=db, uuid=group_uuid)
+        if not group:
             raise GroupNotFound()
-        
+
         user = await User.find_by(db=db, uuid=user_uuid)
-        
-        is_member = Membership.find_by(db, group_id=group.id, user_id=user.id)
+
+        is_member = await Membership.find_by(db=db, group_id=group.id, user_id=user.id)
         if not is_member:
             raise UserNotMemberOfGroup()
+
         await group_cache.sync_group()
     else:
         if not await group_cache.is_member(user_uuid):

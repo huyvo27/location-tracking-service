@@ -234,7 +234,7 @@ async def kick_user(
     member_uuid: str,
     group: Group = Depends(valid_group),
     group_service: GroupService = Depends(get_group_service),
-    redis: Redis = Depends(get_redis)
+    redis: Redis = Depends(get_redis),
 ) -> Response[None]:
     """
     API Kick User from Group

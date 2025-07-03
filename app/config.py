@@ -27,11 +27,11 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_USERNAME: str = "sys_admin"
     DEFAULT_ADMIN_EMAIL: str = "admin@example.com"
     DEFAULT_ADMIN_PASSWORD: str = "sys_admin"
-    REDIS_URLs: Union[str, List[str]] = []
+    REDIS_URLS: Union[str, List[str]] = []
     REDIS_MAX_CONNECTIONS: int = 100
     GROUP_LOCATION_TTL: int = 600
 
-    @field_validator("REDIS_URLs", mode="before")
+    @field_validator("REDIS_URLS", mode="before")
     @classmethod
     def parse_redis_urls(cls, v):
         if isinstance(v, str):

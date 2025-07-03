@@ -54,7 +54,7 @@ async def get_redis(group_uuid: str) -> Redis:
             return client
         except (RedisConnectionError, TimeoutError) as e:
             logger.warning(
-                f"Failed to connect to Redis server {settings.REDIS_URLs[server_idx]} "
+                f"Failed to connect to Redis server {settings.REDIS_URLS[server_idx]} "
                 f"for UUID {group_uuid}: {str(e)}"
             )
             server_idx = (server_idx + 1) % num_servers
