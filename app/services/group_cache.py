@@ -1,9 +1,13 @@
 import json
 
+from fastapi import WebSocket
+from redis.asyncio import ConnectionError as RedisConnectionError
 from redis.asyncio import Redis
+from redis.asyncio.client import PubSub
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.models.group import Group
 from app.models.membership import Membership
 from app.schemas.group import GroupUpdateLocationRequest
 
@@ -21,6 +25,10 @@ class GroupCacheService:
     @property
     def group_location_key(self) -> str:
         return f"location:{self.group_uuid}"
+
+    @property
+    def group_location_channel(self) -> str:
+        return f"group:{self.group_uuid}:location"
 
     async def add_member(self, user_uuid: str) -> None:
         lua_script = """
@@ -41,7 +49,8 @@ class GroupCacheService:
         )
 
     async def sync_group(self) -> None:
-        memberships = await Membership.filter_by(db=self.db, group_uuid=self.group_uuid)
+        group = await Group.find_by(db=self.db, uuid=self.group_uuid)
+        memberships = await Membership.filter_by(db=self.db, group_id=group.id)
         members = [m.user_uuid for m in memberships]
         if not members:
             return
@@ -63,7 +72,6 @@ class GroupCacheService:
             self.group_member_key,
             *args,
         )
-
 
     async def is_member(self, user_uuid: str) -> bool:
         return await self.redis.sismember(self.group_member_key, user_uuid)
@@ -93,11 +101,11 @@ class GroupCacheService:
 
                 local current = redis.call("HGET", location_key, field)
                 if current then
-                local current_data = cjson.decode(current)
-                local current_ts = tonumber(current_data["timestamp"])
-                if current_ts and current_ts >= new_ts then
-                    return 0  -- Do not update
-                end
+                    local current_data = cjson.decode(current)
+                    local current_ts = tonumber(current_data["timestamp"])
+                    if current_ts and current_ts >= new_ts then
+                        return 0  -- Do not update
+                    end
                 end
 
                 redis.call("HSET", location_key, field, payload)
@@ -105,20 +113,80 @@ class GroupCacheService:
                 redis.call("EXPIRE", member_key, ttl)
                 return 1
             """
+        payload = {"user_uuid": user_uuid, **location_data.serializable_dict()}
         await self.redis.eval(
             lua_script,
             2,
             self.group_location_key,
             self.group_member_key,
             user_uuid,
-            json.dumps(location_data.serializable_dict()),
+            json.dumps(payload),
+            str(location_data.timestamp),
+            str(settings.GROUP_LOCATION_TTL),
+        )
+
+    async def update_location_and_publish(
+        self, user_uuid: str, location_data: GroupUpdateLocationRequest
+    ):
+        lua_script = """
+            local location_key = KEYS[1]
+            local member_key = KEYS[2]
+            local channel = KEYS[3]
+
+            local field = ARGV[1]
+            local payload = ARGV[2]
+            local new_ts = tonumber(ARGV[3])
+            local ttl = tonumber(ARGV[4])
+
+            local current = redis.call("HGET", location_key, field)
+            if current then
+                local current_data = cjson.decode(current)
+                local current_ts = tonumber(current_data["timestamp"])
+                if current_ts and current_ts >= new_ts then
+                    return 0  -- Skip update
+                end
+            end
+
+            redis.call("HSET", location_key, field, payload)
+            redis.call("EXPIRE", location_key, ttl)
+            redis.call("EXPIRE", member_key, ttl)
+            redis.call("PUBLISH", channel, payload)
+            return 1
+        """
+        payload = {"user_uuid": user_uuid, **location_data.serializable_dict()}
+
+        res = await self.redis.eval(
+            lua_script,
+            3,
+            self.group_location_key,
+            self.group_member_key,
+            self.group_location_channel,
+            user_uuid,
+            json.dumps(payload),
             str(location_data.timestamp),
             str(settings.GROUP_LOCATION_TTL),
         )
 
     async def get_group_locations(self) -> list[dict]:
         locations = await self.redis.hgetall(self.group_location_key)
-        return [
-            {"user_uuid": user_uuid, **json.loads(val)}
-            for user_uuid, val in locations.items()
-        ]
+        return [json.loads(val) for val in locations.values()]
+
+    async def location_listener(self, websocket: WebSocket):
+        pubsub: PubSub = self.redis.pubsub()
+        await pubsub.subscribe(self.group_location_channel)
+        try:
+            while True:
+                message = await pubsub.get_message(
+                    ignore_subscribe_messages=True, timeout=0.5
+                )
+                if message and message["type"] == "message":
+                    location_data = json.loads(message["data"])
+                    # if user_uuid == location_data["user_uuid"]: continue
+                    await websocket.send_json(
+                        {"action": "group_locations", "data": [location_data]}
+                    )
+        except Exception as e:
+            raise e
+        finally:
+            await pubsub.unsubscribe(self.group_location_channel)
+            await pubsub.close()

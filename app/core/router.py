@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 API_PATH = Path(__file__).parent.parent / "api"
 API_PATH_V1 = API_PATH / "v1"
+WEBSOCKET_PATH = Path(__file__).parent.parent / "websocket/endpoints"
 
 
 def auto_include_routers(package: str, path: Path) -> APIRouter:
@@ -39,3 +40,4 @@ def auto_include_routers(package: str, path: Path) -> APIRouter:
 
 base_router = auto_include_routers(package="app.api", path=API_PATH)
 v1_router = auto_include_routers(package="app.api.v1", path=API_PATH_V1)
+ws_router = auto_include_routers(package="app.websocket.endpoints", path=WEBSOCKET_PATH)
