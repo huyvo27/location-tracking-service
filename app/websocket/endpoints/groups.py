@@ -28,7 +28,7 @@ async def group_ws(websocket: WebSocket, group_uuid: str):
     await connection_manager.connect(group_uuid, websocket)
 
     listener_task = asyncio.create_task(
-        group_cache_service.location_listener(websocket=websocket)
+        group_cache_service.location_listener(websocket=websocket, user_uuid=token_data.sub)
     )
 
     try:

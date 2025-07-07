@@ -1,6 +1,7 @@
 import json
 
 from fastapi import WebSocket
+from fastapi.websockets import WebSocketState
 from redis.asyncio import ConnectionError as RedisConnectionError
 from redis.asyncio import Redis
 from redis.asyncio.client import PubSub
@@ -171,17 +172,20 @@ class GroupCacheService:
         locations = await self.redis.hgetall(self.group_location_key)
         return [json.loads(val) for val in locations.values()]
 
-    async def location_listener(self, websocket: WebSocket):
+    async def location_listener(self, websocket: WebSocket, user_uuid: str):
         pubsub: PubSub = self.redis.pubsub()
         await pubsub.subscribe(self.group_location_channel)
         try:
             while True:
+                if websocket.client_state != WebSocketState.CONNECTED:
+                    break
                 message = await pubsub.get_message(
-                    ignore_subscribe_messages=True, timeout=0.5
+                    ignore_subscribe_messages=True, timeout=1.0
                 )
                 if message and message["type"] == "message":
                     location_data = json.loads(message["data"])
-                    # if user_uuid == location_data["user_uuid"]: continue
+                    if location_data.get("user_uuid") == user_uuid:
+                        continue
                     await websocket.send_json(
                         {"action": "group_locations", "data": [location_data]}
                     )
