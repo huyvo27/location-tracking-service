@@ -74,6 +74,7 @@ isort = "^5.13.0"
 aiosqlite = "^0.21.0"
 asgi-lifespan = "^2.1.0"
 testcontainers = "4.10.0"
+pytest-mock = "^3.14.1"
 
 [tool.poetry.group.test]
 optional = true
@@ -84,6 +85,7 @@ pytest-asyncio = "^0.23.0"
 aiosqlite = "^0.21.0"
 asgi-lifespan = "^2.1.0"
 testcontainers = "4.10.0"
+pytest-mock = "^3.14.1"
 
 [tool.poetry.group.alembic]
 optional = true
