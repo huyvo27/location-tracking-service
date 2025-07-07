@@ -10,7 +10,7 @@ from app.core.router import base_router, v1_router, ws_router
 from app.custom_docs import configure_docs
 from app.db.base import Base
 from app.db.redis import close_redis_clients
-from app.db.session import close_db_engine, engine
+from app.db.session import engine
 from app.initialization import setup_system_admin
 
 

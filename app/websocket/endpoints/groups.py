@@ -31,8 +31,6 @@ async def group_ws(websocket: WebSocket, group_uuid: str):
         group_cache_service.location_listener(websocket=websocket)
     )
 
-    await group_cache_service.sync_group()
-
     try:
         await websocket.send_json(
             {

@@ -51,7 +51,7 @@ class GroupCacheService:
     async def sync_group(self) -> None:
         group = await Group.find_by(db=self.db, uuid=self.group_uuid)
         memberships = await Membership.filter_by(db=self.db, group_id=group.id)
-        members = [m.user_uuid for m in memberships]
+        members = [m.uuid for m in group.members]
         if not members:
             return
 
