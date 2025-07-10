@@ -9,7 +9,6 @@ from sqlalchemy.orm import InstrumentedAttribute, as_declarative, declared_attr
 
 from app.exceptions.base import DatabaseError
 
-from .session import AsyncSessionLocal
 
 p = inflect.engine()
 T = TypeVar("T", bound="ORMBase")
@@ -21,6 +20,7 @@ def with_async_db_session(func: Callable) -> Callable:
         try:
             if db is None:
                 async with AsyncSessionLocal() as db:
+                    from .session import AsyncSessionLocal
                     return await func(cls_or_self, *args, db=db, **kwargs)
             return await func(cls_or_self, *args, db=db, **kwargs)
         except Exception as e:

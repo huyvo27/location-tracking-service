@@ -28,7 +28,9 @@ async def group_ws(websocket: WebSocket, group_uuid: str):
     await connection_manager.connect(group_uuid, websocket)
 
     listener_task = asyncio.create_task(
-        group_cache_service.location_listener(websocket=websocket, user_uuid=token_data.sub)
+        group_cache_service.location_listener(
+            websocket=websocket, user_uuid=token_data.sub
+        )
     )
 
     try:
@@ -54,7 +56,7 @@ async def group_ws(websocket: WebSocket, group_uuid: str):
 
     except WebSocketDisconnect:
         pass
-    except (RedisConnectionError, TimeoutError) as e:
+    except (RedisConnectionError, TimeoutError):
         await websocket.send_json(
             {"error": "Redis server is temporarily unavailable. Please try again."}
         )

@@ -1,6 +1,5 @@
 import uuid
 
-import mmh3
 import pytest
 
 from app.utils.consistent_hash import get_server_index

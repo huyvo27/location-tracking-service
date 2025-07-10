@@ -1,4 +1,4 @@
-from datetime import datetime, time, timezone
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import Any, AsyncGenerator
 
@@ -464,10 +464,6 @@ async def test_update_location(
         headers=auth_headers,
     )
     assert resp.status_code == 200
-
-    # Update location
-    token_data = decode_access_token(auth_headers["Authorization"].split()[1])
-    user_uuid = token_data.sub
 
     resp = await async_client.put(
         f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/locations",

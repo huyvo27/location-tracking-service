@@ -2,14 +2,12 @@ import json
 
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketState
-from redis.asyncio import ConnectionError as RedisConnectionError
 from redis.asyncio import Redis
 from redis.asyncio.client import PubSub
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.group import Group
-from app.models.membership import Membership
 from app.schemas.group import GroupUpdateLocationRequest
 
 
@@ -51,7 +49,6 @@ class GroupCacheService:
 
     async def sync_group(self) -> None:
         group = await Group.find_by(db=self.db, uuid=self.group_uuid)
-        memberships = await Membership.filter_by(db=self.db, group_id=group.id)
         members = [m.uuid for m in group.members]
         if not members:
             return
@@ -156,7 +153,7 @@ class GroupCacheService:
         """
         payload = {"user_uuid": user_uuid, **location_data.serializable_dict()}
 
-        res = await self.redis.eval(
+        await self.redis.eval(
             lua_script,
             3,
             self.group_location_key,
