@@ -1,0 +1,17 @@
+[run]
+omit =
+    */exceptions/*
+    */models/*
+    */api/*
+    */websocket/*
+    */__init__.py
+    */config.py
+    */main.py
+    */custom_docs.py
+    */initialization.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError

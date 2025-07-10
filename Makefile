@@ -33,11 +33,11 @@ test: unit-test integration-test
 
 unit-test:
 	@echo "\033[1;34m [Unit Tests] Running unit tests...\033[0m"
-	@pytest tests/unit
+	@pytest tests/unit --cov=app --disable-warnings -v
 
 integration-test:
 	@echo "\033[1;32m [Integration Tests] Running integration tests...\033[0m"
-	@pytest tests/integration
+	@pytest tests/integration --disable-warnings -v
 
 migrate:
 	@alembic upgrade head
