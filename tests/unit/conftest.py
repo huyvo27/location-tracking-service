@@ -5,13 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.db.base import Base
-
-DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+from tests.unit.config import TestConfig
 
 
 @pytest_asyncio.fixture(scope="session")
 async def test_engine():
-    engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+    engine = create_async_engine(TestConfig.DATABASE_URL, echo=False, future=True)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine

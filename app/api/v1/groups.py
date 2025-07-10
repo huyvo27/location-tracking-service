@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, Depends
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 

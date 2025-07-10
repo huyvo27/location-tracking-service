@@ -9,8 +9,6 @@ from sqlalchemy.orm import InstrumentedAttribute, as_declarative, declared_attr
 
 from app.exceptions.base import DatabaseError
 
-from .session import AsyncSessionLocal
-
 p = inflect.engine()
 T = TypeVar("T", bound="ORMBase")
 
@@ -20,6 +18,8 @@ def with_async_db_session(func: Callable) -> Callable:
     async def wrapper(cls_or_self, *args, db: Optional[AsyncSession] = None, **kwargs):
         try:
             if db is None:
+                from .session import AsyncSessionLocal
+
                 async with AsyncSessionLocal() as db:
                     return await func(cls_or_self, *args, db=db, **kwargs)
             return await func(cls_or_self, *args, db=db, **kwargs)

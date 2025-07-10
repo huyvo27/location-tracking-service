@@ -1,6 +1,3 @@
-import asyncio
-import logging
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings

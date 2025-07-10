@@ -12,22 +12,25 @@ install-dev:
 	@poetry install --with dev
 
 install-test:
-	@poetry install --with test
+	@poetry install --no-root --no-interaction --no-ansi --with test
+
+install-check:
+	@poetry install --no-root --no-interaction --no-ansi --only check
 
 run:
 	@uvicorn $(APP_MODULE) --reload --host $(HOST) --port $(PORT) --env-file $(ENV_FILE)
 
 format:
-	@black .
-	@isort .
+	@poetry run black .
+	@poetry run isort .
 
 lint:
-	@flake8 .
+	@poetry run flake8 .
 
 check:
-	@black --check .
-	@isort --check-only .
-	@flake8 .
+	@poetry run black --check .
+	@poetry run isort --check-only .
+	@poetry run flake8 .
 
 test: unit-test integration-test
 
@@ -40,10 +43,10 @@ integration-test:
 	@poetry run pytest tests/integration --disable-warnings -v
 
 migrate:
-	@alembic upgrade head
+	@poetry run alembic upgrade head
 
 makemigrations:
-	@alembic revision --autogenerate -m "Auto migration"
+	@poetry run alembic revision --autogenerate -m "Auto migration"
 
 clean-pyc:
 	@find . -name "*.pyc" -delete
