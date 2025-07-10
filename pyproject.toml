@@ -76,6 +76,7 @@ asgi-lifespan = "^2.1.0"
 testcontainers = "4.10.0"
 pytest-mock = "^3.14.1"
 pytest-cov = "^6.2.1"
+httpx = "^0.28.1"
 
 [tool.poetry.group.test]
 optional = true
@@ -88,6 +89,7 @@ asgi-lifespan = "^2.1.0"
 testcontainers = "4.10.0"
 pytest-mock = "^3.14.1"
 pytest-cov = "^6.2.1"
+httpx = "^0.28.1"
 
 [tool.poetry.group.alembic]
 optional = true

@@ -12,7 +12,7 @@ install-dev:
 	@poetry install --with dev
 
 install-test:
-	@poetry install --with test
+	@poetry install --no-root --no-interaction --no-ansi --with dev
 
 run:
 	@uvicorn $(APP_MODULE) --reload --host $(HOST) --port $(PORT) --env-file $(ENV_FILE)
