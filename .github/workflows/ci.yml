@@ -75,8 +75,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-poetry-
 
-      - name: Install dev dependencies
-        run: make install-test
+      - name: Install check dependencies
+        run: make install-check
 
       - name: Run lint check
         run: make check
