@@ -11,8 +11,8 @@ on:
       - main
 
 jobs:
-  ci:
-    name: Run Tests and Linter
+  test:
+    name: Run Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -25,27 +25,58 @@ jobs:
           python-version: '3.12'
 
       - name: Install Poetry
-        run: |
-          pip install poetry
+        run: pip install poetry
 
-      - name: Cache Poetry dependencies
+      - name: Configure Poetry virtualenv
+        run: poetry config virtualenvs.in-project true
+
+      - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/pypoetry
-            ~/.virtualenvs
+            .venv
           key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
             ${{ runner.os }}-poetry-
 
-      - name: Configure Poetry to use in-project virtualenv
-        run: poetry config virtualenvs.in-project true
-
-      - name: Install dependencies
+      - name: Install test dependencies
         run: make install-test
 
-      - name: Run tests
+      - name: Run unit tests
         run: make unit-test
 
-      - name: Check code formatting
+  lint:
+    name: Run Lint and Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Configure Poetry virtualenv
+        run: poetry config virtualenvs.in-project true
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install dev dependencies
+        run: make install-test
+
+      - name: Run lint check
         run: make check
