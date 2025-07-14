@@ -102,6 +102,50 @@ The service follows a layered architecture for scalability and real-time perform
     - LTS pods are horizontally scalable and stateless.
     - Redis nodes can be clustered or sharded depending on load and reliability needs.
 
+## Database Structure
+### Relational DB Schema
+![DB Schema](./docs/db/erd.png)
+### Redis Schema
+
+##### `member:{group_uuid}`
+
+* Type: `Set`
+* Value: each item is a `user_uuid` (string)
+* TTL: refreshed on update and creation
+
+##### `location:{group_uuid}`
+
+* Type: `Hash`
+* Field: `user_uuid`
+* Value: JSON-encoded location object (as string), example:
+
+  ```json5
+  {
+    "user_uuid": "user-1",
+    "latitude": 10.123,
+    "longitude": 106.456,
+    "timestamp": 1720992121,
+    "nickname": "..." // optional
+  }
+  ```
+* TTL: refreshed on update
+
+#### `group:{group_uuid}:location`
+
+* Type: `Pub/Sub Channel`
+* Message: JSON payload of the updated location
+* Example:
+
+  ```json5
+  {
+    "user_uuid": "user-1",
+    "latitude": 10.123,
+    "longitude": 106.456,
+    "timestamp": 1720992121,
+    "nickname": "..." // optional
+  }
+  ```
+
 ## API Endpoints
 ### Authentication
 - **POST /api/v1/auth/login:** Authenticate user with username and password, returning an access token.
@@ -127,49 +171,6 @@ The service follows a layered architecture for scalability and real-time perform
 - **PUT /api/v1/users/{user_uuid}:** Update a specific user's information.
 - **DELETE /api/v1/users/{user_uuid}:** Delete a specific user.
 
-## Database Structure
-### Relational DB Schema
-![DB Schema](./docs/db/erd.png)
-### Redis Schema
-
-##### `member:{group_uuid}`
-
-* Type: `Set`
-* Value: each item is a `user_uuid` (string)
-* TTL: refreshed on update and creation
-
-##### `location:{group_uuid}`
-
-* Type: `Hash`
-* Field: `user_uuid`
-* Value: JSON-encoded location object (as string), example:
-
-  ```json
-  {
-    "user_uuid": "user-1",
-    "latitude": 10.123,
-    "longitude": 106.456,
-    "timestamp": 1720992121,
-    "nickname": "..." //(optional)
-  }
-  ```
-* TTL: refreshed on update
-
-#### `group:{group_uuid}:location`
-
-* Type: `Pub/Sub Channel`
-* Message: JSON payload of the updated location
-* Example:
-
-  ```json
-  {
-    "user_uuid": "user-1",
-    "latitude": 10.123,
-    "longitude": 106.456,
-    "timestamp": 1720992121,
-    "nickname": "..." //(optional)
-  }
-  ```
 
 ## Websocket Endpoint
 - **/groups/{group_uuid}/ws**: Establishes a WebSocket connection for real-time group location tracking. Requires user authentication and group membership. Supports the following actions:
