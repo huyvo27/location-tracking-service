@@ -30,6 +30,12 @@ class GroupListRequest(PaginationParams):
     search: Optional[str] = Field(
         None, description="Search by group name or description"
     )
+    joined: Optional[bool] = Field(
+        False, description="If true, only groups the user belongs to will be returned"
+    )
+    only_owned: Optional[bool] = Field(
+        False, description="If true, only groups owned by the user are returned"
+    )
 
 
 class GroupJoinRequest(BaseSchema):
@@ -38,19 +44,6 @@ class GroupJoinRequest(BaseSchema):
         min_length=8,
         max_length=128,
         description="Secret key for joining the group",
-    )
-
-
-class MyGroupListRequest(GroupListRequest):
-    """
-    Request schema for listing groups that the user belongs to.
-    Inherits from PaginationParams for pagination support.
-    """
-
-    only_owned: Optional[bool] = Field(
-        False,
-        description="If true, only groups owned by the user are returned. "
-        "Defaults to false.",
     )
 
 

@@ -17,7 +17,6 @@ from app.schemas.group import (
     GroupJoinRequest,
     GroupListRequest,
     GroupUpdateRequest,
-    MyGroupListRequest,
 )
 
 
@@ -66,7 +65,7 @@ class GroupService:
         return await Group.filter_by(db=self.db, contains=contains, as_stmt=as_stmt)
 
     async def get_my_groups(
-        self, user: User, params: MyGroupListRequest, as_stmt: bool = False
+        self, user: User, params: GroupListRequest, as_stmt: bool = False
     ):
         contains = {}
         if params.search:

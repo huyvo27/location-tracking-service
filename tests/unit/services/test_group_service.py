@@ -18,7 +18,6 @@ from app.schemas.group import (
     GroupJoinRequest,
     GroupListRequest,
     GroupUpdateRequest,
-    MyGroupListRequest,
 )
 from app.services.group import GroupService
 from app.utils.enums import UserRole
@@ -59,7 +58,9 @@ def group_list_params():
 
 @pytest.fixture
 def my_group_list_params():
-    return MyGroupListRequest(page=1, page_size=2, search="Test", only_owned=False)
+    return GroupListRequest(
+        page=1, page_size=2, search="Test", joined=True, only_owned=False
+    )
 
 
 async def get_or_create_user(db_session, data):

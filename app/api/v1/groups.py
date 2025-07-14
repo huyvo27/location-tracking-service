@@ -23,7 +23,6 @@ from app.schemas.group import (
     GroupUpdateLocationRequest,
     GroupUpdateRequest,
     MembershipResponse,
-    MyGroupListRequest,
     SimpleGroupResponse,
     UserLocation,
 )
@@ -43,45 +42,26 @@ async def get_group_service(db: AsyncSession = Depends(get_db)) -> GroupService:
     return GroupService(db=db)
 
 
-@router.get(
-    "",
-    response_model=PaginatedResponse[SimpleGroupResponse],
-    dependencies=[Depends(login_required)],
-)
-async def list(
+@router.get("", response_model=PaginatedResponse[SimpleGroupResponse])
+async def list_group(
     params: GroupListRequest = Depends(),
-    group_service: GroupService = Depends(get_group_service),
-    db: AsyncSession = Depends(get_db),
-) -> PaginatedResponse[SimpleGroupResponse]:
-    """
-    API Get list all Groups
-    """
-    stmt = await group_service.list(params=params, as_stmt=True)
-
-    paginated_groups = await paginate(
-        db=db, stmt=stmt, params=params, schema=GroupDetailResponse
-    )
-    return PaginatedResponse.success(data=paginated_groups)
-
-
-@router.get(
-    "/me",
-    response_model=PaginatedResponse[SimpleGroupResponse],
-    dependencies=[Depends(login_required)],
-)
-async def get_my_groups(
-    params: MyGroupListRequest = Depends(),
     user: User = Depends(login_required),
     group_service: GroupService = Depends(get_group_service),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse[SimpleGroupResponse]:
     """
-    API Get list Groups that the user belongs to
+    Retrieve a paginated list of groups.
+    - `joined=true` will return only groups the user belongs to.
+    - `only_owned=true` will return only groups owned by the user.
+    - If neither is set, returns all groups available.
     """
-    stmt = await group_service.get_my_groups(user=user, params=params, as_stmt=True)
+    if params.joined:
+        stmt = await group_service.get_my_groups(user=user, params=params, as_stmt=True)
+    else:
+        stmt = await group_service.list(params=params, as_stmt=True)
 
     paginated_groups = await paginate(
-        db=db, stmt=stmt, params=params, schema=SimpleGroupResponse
+        db=db, stmt=stmt, params=params, schema=GroupDetailResponse
     )
     return PaginatedResponse.success(data=paginated_groups)
 
@@ -92,9 +72,11 @@ async def get_my_groups(
     response_model=Response[GroupDetailResponse],
     responses={404: {"description": "Group not found"}},
 )
-async def detail(group: Group = Depends(valid_group)) -> Response[GroupDetailResponse]:
+async def get_group_detail(
+    group: Group = Depends(valid_group),
+) -> Response[GroupDetailResponse]:
     """
-    API Get Group Detail
+    Get Group Detail
     """
     return Response.success(data=group)
 
@@ -114,7 +96,7 @@ async def create(
     group_service: GroupService = Depends(get_group_service),
 ) -> Response[GroupDetailResponse]:
     """
-    API Create Group
+    Create a group.
     """
     new_group = await group_service.create_group(data=group_data, user=user)
     try:
@@ -132,7 +114,7 @@ async def create(
 
 
 @router.post(
-    "/{group_uuid}/join",
+    "/{group_uuid}/members",
     response_model=Response[MembershipResponse],
     dependencies=[Depends(valid_user)],
     responses={
@@ -147,7 +129,7 @@ async def join_group(
     group_service: GroupService = Depends(get_group_service),
 ) -> Response[MembershipResponse]:
     """
-    API Join Group
+    Join a group. Creates a membership between the user and the group.
     """
     membership = await group_service.join_group(group=group, user=user, params=params)
     try:
@@ -169,13 +151,13 @@ async def join_group(
         403: {"description": "Only the owner can delete the group"},
     },
 )
-async def delete(
+async def delete_group(
     group: Group = Depends(valid_group),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
 ) -> Response[None]:
     """
-    API Delete Group
+    Delete a group. Only the owner can perform this action.
     """
     try:
         group_cache_service = GroupCacheService(
@@ -190,7 +172,7 @@ async def delete(
 
 
 @router.delete(
-    "/{group_uuid}/leave",
+    "/{group_uuid}/members/me",
     response_model=Response[None],
     responses={
         404: {"description": "Group not found"},
@@ -203,7 +185,7 @@ async def leave_group(
     redis: Redis = Depends(get_redis),
 ) -> Response[None]:
     """
-    API Leave Group
+    Allows the current user to leave a group.
     """
     try:
         group_cache_service = GroupCacheService(
@@ -221,7 +203,7 @@ async def leave_group(
 
 
 @router.delete(
-    "/{group_uuid}/kick/{member_uuid}",
+    "/{group_uuid}/members/{member_uuid}",
     dependencies=[Depends(ownership_required)],
     response_model=Response[None],
     responses={
@@ -229,7 +211,7 @@ async def leave_group(
         403: {"description": "Only the owner can kick users from the group"},
     },
 )
-async def kick_user(
+async def remove_group_member(
     group_uuid: str,
     member_uuid: str,
     group: Group = Depends(valid_group),
@@ -253,7 +235,7 @@ async def kick_user(
 
 
 @router.put(
-    "/{group_uuid}/update",
+    "/{group_uuid}",
     dependencies=[Depends(ownership_required)],
     response_model=Response[GroupDetailResponse],
     responses={
@@ -268,31 +250,31 @@ async def update_group(
     group_service: GroupService = Depends(get_group_service),
 ) -> Response[GroupDetailResponse]:
     """
-    API Update Group
+    Update group information. Only the group owner can perform this action.
     """
     updated_group = await group_service.update_group(group=group, data=group_data)
     return Response.success(data=updated_group)
 
 
-@router.put("/{group_uuid}/locations")
-async def update_location(
+@router.put("/{group_uuid}/members/me/location")
+async def update_my_location(
     location: GroupUpdateLocationRequest,
     group_cache_service: GroupCacheService = Depends(ensure_user_is_member_of_group),
     token_data: TokenData = Depends(get_token_data),
 ) -> Response[None]:
     """
-    API Update member's location
+    Update the current user's location in a group.
     """
     await group_cache_service.update_location(token_data.sub, location)
     return Response.success()
 
 
-@router.get("/{group_uuid}/locations")
+@router.get("/{group_uuid}/members/locations")
 async def get_locations(
     group_cache_service: GroupCacheService = Depends(ensure_user_is_member_of_group),
 ) -> PaginatedResponse[UserLocation]:
     """
-    API Get all locations in group
+    Get locations of members in a group.
     """
     group_locations = await group_cache_service.get_group_locations()
     paginated_data = paginate_without_stmt(items=group_locations, schema=UserLocation)
