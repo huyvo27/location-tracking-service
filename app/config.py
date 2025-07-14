@@ -9,9 +9,9 @@ BASE_DIR = Path(__file__).parent.parent
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "LOCAL TRACKER"
+    APP_NAME: str = "LOCAL TRACKING SERVICE"
     APP_VERSION: str = "1.0.0"
-    APP_DESCRIPTION: str = "LOCAL TRACKER API"
+    APP_DESCRIPTION: str = "LOCAL TRACKING SERVICE"
     APP_URL: str = "http://localhost:8000"
     APP_DOCS_URL: str = "/docs"
     SECRET_KEY: str = ""
