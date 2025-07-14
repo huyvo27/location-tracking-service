@@ -132,7 +132,7 @@ async def test_get_my_groups(
 ):
     # List user's groups
     resp = await async_client.get(
-        GROUPS_ENDPOINT_PREFIX + "/me", headers=owner_auth_headers
+        GROUPS_ENDPOINT_PREFIX + "?joined=true", headers=owner_auth_headers
     )
     assert resp.status_code == 200
     data = resp.json()["data"]
@@ -141,7 +141,7 @@ async def test_get_my_groups(
     assert any(item["uuid"] == existing_group.uuid for item in data["items"])
 
     # Try without authentication
-    resp = await async_client.get(GROUPS_ENDPOINT_PREFIX + "/me")
+    resp = await async_client.get(GROUPS_ENDPOINT_PREFIX + "?joined=true")
     assert resp.status_code == 401
 
 
@@ -218,7 +218,7 @@ async def test_join_group(
     # Join group
     join_data = {"key": existing_group.key}
     resp = await async_client.post(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members",
         json=join_data,
         headers=auth_headers,
     )
@@ -245,7 +245,7 @@ async def test_join_group(
 
     # Try joining again (should fail)
     resp = await async_client.post(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members",
         json=join_data,
         headers=auth_headers,
     )
@@ -253,7 +253,7 @@ async def test_join_group(
 
     # Try without authentication
     resp = await async_client.post(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join", json=join_data
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members", json=join_data
     )
     assert resp.status_code == 401
 
@@ -306,7 +306,7 @@ async def test_leave_group(
     # Join group
     join_data = {"key": existing_group.key}
     resp = await async_client.post(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members",
         json=join_data,
         headers=auth_headers,
     )
@@ -314,7 +314,8 @@ async def test_leave_group(
 
     # Leave group
     resp = await async_client.delete(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/leave", headers=auth_headers
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/me",
+        headers=auth_headers,
     )
 
     # init group_cache_service
@@ -336,18 +337,19 @@ async def test_leave_group(
 
     # Try leaving again (should fail)
     resp = await async_client.delete(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/leave", headers=auth_headers
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/me",
+        headers=auth_headers,
     )
     assert resp.status_code == 403
 
     # Try without authentication
     resp = await async_client.delete(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/leave"
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/me"
     )
     assert resp.status_code == 401
 
 
-async def test_kick_user(
+async def test_kick_member(
     async_client: AsyncClient,
     owner_auth_headers: dict,
     auth_headers: dict,
@@ -356,7 +358,7 @@ async def test_kick_user(
     # Join group
     join_data = {"key": existing_group.key}
     resp = await async_client.post(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members",
         json=join_data,
         headers=auth_headers,
     )
@@ -370,20 +372,20 @@ async def test_kick_user(
 
     # Try without authentication
     resp = await async_client.delete(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/kick/{user_uuid}"
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/{user_uuid}"
     )
     assert resp.status_code == 401
 
     # Try kicking as non-owner
     resp = await async_client.delete(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/kick/{owner_uuid}",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/{owner_uuid}",
         headers=auth_headers,
     )
     assert resp.status_code == 403
 
     # Kick user as owner
     resp = await async_client.delete(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/kick/{user_uuid}",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/{user_uuid}",
         headers=owner_auth_headers,
     )
     # init group_cache_service
@@ -403,7 +405,7 @@ async def test_kick_user(
 
     #  Kick user as owner again
     resp = await async_client.delete(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/kick/{user_uuid}",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/{user_uuid}",
         headers=owner_auth_headers,
     )
     assert resp.status_code == 404
@@ -422,7 +424,7 @@ async def test_update_group(
         "description": "Updated group description",
     }
     resp = await async_client.put(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/update",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}",
         json=update_data,
         headers=owner_auth_headers,
     )
@@ -438,7 +440,7 @@ async def test_update_group(
 
     # Try updating as non-owner
     resp = await async_client.put(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/update",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}",
         json=update_data,
         headers=auth_headers,
     )
@@ -446,7 +448,7 @@ async def test_update_group(
 
     # Try without authentication
     resp = await async_client.put(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/update", json=update_data
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}", json=update_data
     )
     assert resp.status_code == 401
 
@@ -459,14 +461,14 @@ async def test_update_location(
 ):
     join_data = {"key": existing_group.key}
     resp = await async_client.post(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members",
         json=join_data,
         headers=auth_headers,
     )
     assert resp.status_code == 200
 
     resp = await async_client.put(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/locations",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/me/location",
         json=location_data,
         headers=auth_headers,
     )
@@ -484,7 +486,7 @@ async def test_get_group_locations(
     # First join the group
     join_data = {"key": existing_group.key}
     resp = await async_client.post(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/join",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members",
         json=join_data,
         headers=auth_headers,
     )
@@ -495,14 +497,14 @@ async def test_get_group_locations(
     user_uuid = token_data.sub
 
     await async_client.put(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/locations",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/me/location",
         json=location_data,
         headers=auth_headers,
     )
 
     # Get group locations
     resp = await async_client.get(
-        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/locations",
+        f"{GROUPS_ENDPOINT_PREFIX}/{existing_group.uuid}/members/locations",
         headers=owner_auth_headers,
     )
 
