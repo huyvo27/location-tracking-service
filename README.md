@@ -87,7 +87,7 @@ The service follows a layered architecture for scalability and real-time perform
 
 - **Client Layer:** Mobile app use HTTP/REST and WebSocket to interact with the server.
 
-- **API Gateway:** Acts as a single entry point for all HTTP and WebSocket traffic. Handles routing, authentication forwarding, rate limiting, and can be backed by NGINX or an API management layer (e.g., Kong or Envoy).
+- **Load Balancer:** Acts as a single entry point for all HTTP and WebSocket traffic. It distributes incoming requests across multiple backend services to ensure high availability and scalability. It can also handle SSL termination, basic health checks, and routing logic. Common implementations include NGINX, HAProxy, or cloud-native load balancers (e.g., AWS ELB, Google Cloud Load Balancer).
 
 - **Application Layer (LTS Pods):**
     - LTS (Location Tracking Service) instances are deployed as multiple pods behind a load balancer.
